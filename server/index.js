@@ -4,7 +4,10 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "https://ierp-project-e42u.vercel.app",
+  credentials: true,
+}));
 app.use(express.json());
 
 // Connect to MongoDB
