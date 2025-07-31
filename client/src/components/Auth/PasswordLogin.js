@@ -1,11 +1,13 @@
 // src/components/Auth/PasswordLogin.jsx
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 export default function PasswordLogin() {
   const [userIdOrEmail, setUserIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,8 +18,38 @@ export default function PasswordLogin() {
       return;
     }
 
-    setErrorMsg('');
-    console.log('Logging in...');
+    try{
+      const res = await axios.post('https://ierp-server.onrender.com/api/auth/login',{
+        userIdOrEmail,
+        password
+      });
+
+      const { token, role, userId, name } = res.data;
+
+      //Store token and User Details
+      localStorage.setItem('iERP-token', token);
+      localStorage.setItem('iERP-user', JSON.stringify({ userId, role, name }));
+
+      //Redirect to role-based dashboard
+      switch(role) {
+        case 'Admin':
+          navigate('/admin/dashboard');
+          break;
+        case 'Student':
+          navigate('/student/dashboard');
+          break;
+        case 'Faculty':
+          navigate('/faculty/dashboard');
+          break;
+        //Add Other Roles
+        default:
+          navigate('/');
+      }
+    }
+    catch(err){
+      setErrorMsg(err.response?.data?.error || "Login failed. Please try again.");
+      console.error('Login error:', err);
+    }
   };
 
   return (

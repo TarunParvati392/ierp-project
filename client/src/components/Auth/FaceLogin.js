@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 export default function FaceLogin() {
   const [error, setError] = useState('');
   const [cameraAllowed, setCameraAllowed] = useState(false);
+  const videoRef = useRef(null);
 
   const handleFaceLogin = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraAllowed(true);
+
+      if(videoRef.current){
+        videoRef.current.srcObject = stream;
+      }
 
       // TODO: Add face detection logic later
     } catch (err) {
@@ -28,6 +33,7 @@ export default function FaceLogin() {
 
       {cameraAllowed && (
         <video
+          red = {videoRef}
           autoPlay
           playsInline
           className="rounded-md border w-full max-w-md"
