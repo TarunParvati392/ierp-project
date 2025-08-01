@@ -65,11 +65,18 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
+app.post('/api/auth/login', (req, res) => {
+  console.log("Login hit directly");
+  res.json({ message: 'Temporary route hit' });
+});
+
+
 app._router.stack.forEach((r) => {
   if (r.route && r.route.path) {
     console.log("Registered route:", r.route.path);
   }
 });
+
 
 
 // Start server
