@@ -7,7 +7,7 @@ dotenv.config();
 
 const app = express();
 const allowedOrigins = [
-  'https://ierp-project-e42u.vercel.app',
+  'https://ierp-project-e42u-dadrnj35a-tarun-paravthis-projects.vercel.app/',
   'http://localhost:3000'
 ];
 

@@ -1,7 +1,7 @@
 // src/components/Auth/PasswordLogin.jsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../utils/api/axiosInstance';
 
 export default function PasswordLogin() {
   const [userIdOrEmail, setUserIdOrEmail] = useState('');
@@ -19,10 +19,10 @@ export default function PasswordLogin() {
     }
 
     try{
-      const res = await axios.post('https://ierp-server.onrender.com/api/auth/login',{
+      const res = await axiosInstance.post('auth/login',{
         userIdOrEmail,
         password
-      });
+      },{withCredentials: true});
 
       const { token, role, userId, name } = res.data;
 

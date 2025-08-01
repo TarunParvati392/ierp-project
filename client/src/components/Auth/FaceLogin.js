@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function FaceLogin() {
   const [error, setError] = useState('');
@@ -10,12 +10,12 @@ export default function FaceLogin() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraAllowed(true);
 
-      if(videoRef.current){
+      // Attach the stream to the video element
+      if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-
-      // TODO: Add face detection logic later
     } catch (err) {
+      console.error(err);
       setError('Camera access denied or unavailable.');
     }
   };
@@ -33,11 +33,10 @@ export default function FaceLogin() {
 
       {cameraAllowed && (
         <video
-          red = {videoRef}
+          ref={videoRef}
           autoPlay
           playsInline
           className="rounded-md border w-full max-w-md"
-          id="webcam"
         />
       )}
 
