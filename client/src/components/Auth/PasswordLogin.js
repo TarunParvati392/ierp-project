@@ -12,26 +12,23 @@ export default function PasswordLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // TODO: Connect to backend login API
     if (!userIdOrEmail || !password) {
       setErrorMsg("All fields are required.");
       return;
     }
 
-    try{
-      const res = await axiosInstance.post('auth/login',{
+    try {
+      const res = await axiosInstance.post('auth/login', {
         userIdOrEmail,
         password
-      },{withCredentials: true});
+      });
 
-      const { token, role, userId, name } = res.data;
+      const { token, user } = res.data;
 
-      //Store token and User Details
       localStorage.setItem('iERP-token', token);
-      localStorage.setItem('iERP-user', JSON.stringify({ userId, role, name }));
+      localStorage.setItem('iERP-user', JSON.stringify(user));
 
-      //Redirect to role-based dashboard
-      switch(role) {
+      switch (user.role) {
         case 'Admin':
           navigate('/admin/dashboard');
           break;
@@ -41,13 +38,11 @@ export default function PasswordLogin() {
         case 'Faculty':
           navigate('/faculty/dashboard');
           break;
-        //Add Other Roles
         default:
           navigate('/');
       }
-    }
-    catch(err){
-      setErrorMsg(err.response?.data?.error || "Login failed. Please try again.");
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || "Login failed. Please try again.");
       console.error('Login error:', err);
     }
   };

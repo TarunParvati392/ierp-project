@@ -1,3 +1,4 @@
+// src/components/Auth/FaceLogin.jsx
 import { useState, useRef, useEffect } from 'react';
 
 export default function FaceLogin() {
@@ -10,7 +11,6 @@ export default function FaceLogin() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraAllowed(true);
 
-      // Attach the stream to the video element
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
@@ -19,6 +19,14 @@ export default function FaceLogin() {
       setError('Camera access denied or unavailable.');
     }
   };
+
+  useEffect(() => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.onloadedmetadata = () => {
+        videoRef.current.play();
+      };
+    }
+  }, [cameraAllowed]);
 
   return (
     <div className="flex flex-col gap-4 items-center">

@@ -1,3 +1,4 @@
+// controllers/authController.js
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -7,7 +8,7 @@ exports.loginUser = async (req, res) => {
     const { userIdOrEmail, password } = req.body;
 
     const user = await User.findOne({
-      $or: [{ email: userIdOrEmail }, { userId: userIdOrEmail }],
+      $or: [{ email: userIdOrEmail }, { userId: userIdOrEmail }]
     });
 
     if (!user) return res.status(404).json({ message: 'User not found' });

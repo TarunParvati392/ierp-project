@@ -1,3 +1,4 @@
+// src/pages/LoginPage.jsx
 import { useState } from 'react';
 import PasswordLogin from '../components/Auth/PasswordLogin';
 import FaceLogin from '../components/Auth/FaceLogin';
@@ -14,9 +15,8 @@ export default function LoginPage() {
           <p className="text-xl mt-4 text-purple-300">Smart System For College Automation</p>
         </div>
 
-        {/* Right Side - Login Card */}
+        {/* Right Side */}
         <div className="w-full md:w-1/2 bg-white text-gray-900 p-8 md:p-12 flex flex-col justify-center">
-          {/* Tabs */}
           <div className="flex mb-6">
             <button
               className={`flex-1 py-2 px-4 font-semibold border-b-2 ${activeTab === 'password' ? 'border-purple-600 text-purple-700' : 'border-gray-300'}`}
