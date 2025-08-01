@@ -65,6 +65,13 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
+app._router.stack.forEach((r) => {
+  if (r.route && r.route.path) {
+    console.log("Registered route:", r.route.path);
+  }
+});
+
+
 // Start server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
