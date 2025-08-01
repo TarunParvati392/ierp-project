@@ -1,4 +1,3 @@
-// src/components/Auth/PasswordLogin.jsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../utils/api/axiosInstance';
@@ -27,6 +26,8 @@ export default function PasswordLogin() {
 
       localStorage.setItem('iERP-token', token);
       localStorage.setItem('iERP-user', JSON.stringify(user));
+
+      console.log(`${user.role} logged in: ${user.userId}`);
 
       switch (user.role) {
         case 'Admin':

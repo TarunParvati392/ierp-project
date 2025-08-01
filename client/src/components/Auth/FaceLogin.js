@@ -1,4 +1,3 @@
-// src/components/Auth/FaceLogin.jsx
 import { useState, useRef, useEffect } from 'react';
 
 export default function FaceLogin() {
@@ -10,10 +9,7 @@ export default function FaceLogin() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraAllowed(true);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (err) {
       console.error(err);
       setError('Camera access denied or unavailable.');
@@ -38,7 +34,6 @@ export default function FaceLogin() {
           Activate Camera for Face Login
         </button>
       )}
-
       {cameraAllowed && (
         <video
           ref={videoRef}
@@ -47,7 +42,6 @@ export default function FaceLogin() {
           className="rounded-md border w-full max-w-md"
         />
       )}
-
       {error && <p className="text-red-500">{error}</p>}
     </div>
   );

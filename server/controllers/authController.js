@@ -1,4 +1,3 @@
-// controllers/authController.js
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -6,6 +5,7 @@ const jwt = require('jsonwebtoken');
 exports.loginUser = async (req, res) => {
   try {
     const { userIdOrEmail, password } = req.body;
+    console.log("Login Attempt:", userIdOrEmail);
 
     const user = await User.findOne({
       $or: [{ email: userIdOrEmail }, { userId: userIdOrEmail }]
@@ -31,8 +31,8 @@ exports.loginUser = async (req, res) => {
         name: user.name,
         role: user.role,
         email: user.email,
-        profileImage: user.profileImage,
-      },
+        profileImage: user.profileImage
+      }
     });
   } catch (err) {
     console.error(err);
