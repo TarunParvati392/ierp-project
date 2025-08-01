@@ -58,6 +58,19 @@ connectDB();
 
 // Routes
 // Root test route
+// Log registered routes after mounting
+setTimeout(() => {
+  try {
+    app._router.stack.forEach((r) => {
+      if (r.route && r.route.path) {
+        console.log("✅ Registered route:", r.route.path);
+      }
+    });
+  } catch (err) {
+    console.log("⚠️  Could not log routes:", err.message);
+  }
+}, 1000);
+
 app.get('/', (req, res) => {
   res.send('🚀 iERP Backend is Live');
 });
@@ -69,14 +82,6 @@ app.post('/api/auth/login', (req, res) => {
   console.log("Login hit directly");
   res.json({ message: 'Temporary route hit' });
 });
-
-
-app._router.stack.forEach((r) => {
-  if (r.route && r.route.path) {
-    console.log("Registered route:", r.route.path);
-  }
-});
-
 
 
 // Start server
