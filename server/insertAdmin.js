@@ -1,33 +1,24 @@
 const mongoose = require('mongoose');
-const User = require('./models/UserModel');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const insertAdmin = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    const exists = await User.findOne({ userId: 'admin001' });
-    if (exists) {
-      console.log('Admin already exists.');
-      return;
-    }
+const User = require('./models/User');
 
-    const admin = new User({
-      userId: 'admin001',
-      name: 'Admin User',
-      email: 'admin@ierp.com',
-      password: '$2b$10$zqXNlhqLaCDe3P.dLZUZae/S.zDXP.nWCKVx2/0UZGSWacYX.gZXi', // Hashed Admin@123
-      role: 'Admin',
-      profileImage: '/uploads/default.png',
-      isBlocked: false
-    });
+mongoose.connect(process.env.MONGODB_URI).then(async () => {
+  const hashedPassword = await bcrypt.hash("Admin@123", 10);
 
-    await admin.save();
-    console.log('✅ Admin inserted');
-    process.exit();
-  } catch (err) {
-    console.error('Error inserting admin:', err);
-    process.exit(1);
-  }
-};
+  const admin = new User({
+    userId: "admin001",
+    name: "Admin User",
+    email: "admin@ierp.com",
+    password: hashedPassword,
+    role: "Admin",
+    isBlocked: false,
+  });
 
-insertAdmin();
+  await admin.save();
+  console.log("✅ Admin user inserted successfully.");
+  mongoose.disconnect();
+}).catch(err => {
+  console.error("❌ Error inserting admin user:", err);
+});
