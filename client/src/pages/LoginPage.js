@@ -3,16 +3,24 @@ import LoginTabs from '../components/Auth/LoginTabs';
 
 const LoginPage = () => {
   return (
-    <div className="flex h-screen">
-      {/* Left side */}
-      <div className="w-1/2 bg-gradient-to-br from-purple-900 via-indigo-800 to-gray-900 text-white flex flex-col justify-center items-center">
-        <h1 className="text-5xl font-bold mb-4">iERP</h1>
-        <p className="text-xl">Smart system for college automation</p>
+    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
+      {/* Left Side Title */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-10">
+        <div>
+          <h1 className="text-7xl md:text-8xl font-extrabold text-indigo-400 leading-tight drop-shadow-2xl">
+            iERP
+          </h1>
+          <p className="text-2xl md:text-3xl text-gray-300 mt-6 font-light tracking-wider">
+            Smart System for College Automation
+          </p>
+        </div>
       </div>
 
-      {/* Right side */}
-      <div className="w-1/2 bg-gray-100 flex justify-center items-center">
-        <LoginTabs />
+      {/* Right Side Login Card */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl p-10">
+          <LoginTabs />
+        </div>
       </div>
     </div>
   );
