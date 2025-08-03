@@ -110,4 +110,25 @@ exports.verifyToken = async (req, res) => {
   }
 };
 
+// Save Face Handler
+exports.saveFace = async (req, res) => {
+  const { userId, facelock } = req.body;
+
+  if (!facelock) return res.status(400).json({ error: 'No face data provided' });
+
+  try {
+    const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.facelock = JSON.stringify(facelock);
+    await user.save();
+
+    res.status(200).json({ message: 'Face saved successfully' });
+  } catch (err) {
+    console.error("Face Save Error:", err);
+    res.status(500).json({ error: 'Failed to save face' });
+  }
+};
+
+
 
