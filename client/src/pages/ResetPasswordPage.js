@@ -9,9 +9,8 @@ const ResetPasswordPage = () => {
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [expired, setExpired] = useState(false);
+  const [tokenExpired, setTokenExpired] = useState(false);
 
   const [validations, setValidations] = useState({
     capital: false,
@@ -21,13 +20,24 @@ const ResetPasswordPage = () => {
     match: false,
   });
 
+  // Validate token on page load
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        await api.post(`/api/auth/verify-token/${token}`);
+      } catch (err) {
+        setTokenExpired(true);
+      }
+    };
+    verifyToken();
+  }, [token]);
+
   useEffect(() => {
     const capital = /[A-Z]/.test(newPassword);
     const special = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
     const number = /\d/.test(newPassword);
     const length = newPassword.length >= 8;
     const match = newPassword === confirmPassword && confirmPassword !== '';
-
     setValidations({ capital, special, number, length, match });
   }, [newPassword, confirmPassword]);
 
@@ -35,20 +45,15 @@ const ResetPasswordPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setErrorMsg('');
+    if (!allValid) return;
 
     try {
-      const res = await api.post(`/auth/reset-password/${token}`, { newPassword });
+      const res = await api.post(`/api/auth/reset-password/${token}`, { newPassword });
       alert(res.data.message);
       navigate('/');
     } catch (err) {
-      const error = err.response?.data?.error || '';
-      if (error.toLowerCase().includes('expired') || error.toLowerCase().includes('invalid')) {
-        setExpired(true);
-      } else {
-        setErrorMsg(error || 'Something went wrong');
-      }
+      setErrorMsg('Reset Password Time Expired');
+      setTokenExpired(true);
     }
   };
 
@@ -65,7 +70,6 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
-      {/* Left Side Title */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-10">
         <div>
           <h1 className="text-7xl md:text-8xl font-extrabold text-indigo-400 leading-tight drop-shadow-2xl">
@@ -77,15 +81,12 @@ const ResetPasswordPage = () => {
         </div>
       </div>
 
-      {/* Right Side Card */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl p-10">
           <h2 className="text-2xl font-bold mb-6 text-indigo-400">Reset Password</h2>
 
-          {expired ? (
-            <p className="text-red-400 text-lg font-semibold text-center mt-10">
-              Reset Password Time Expired
-            </p>
+          {tokenExpired ? (
+            <p className="text-center text-red-400 text-lg">Reset Password Time Expired</p>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
@@ -114,7 +115,6 @@ const ResetPasswordPage = () => {
               </div>
 
               {errorMsg && <p className="text-red-400 text-sm mt-2">{errorMsg}</p>}
-              {message && <p className="text-green-400 text-sm mt-2">{message}</p>}
 
               <button
                 type="submit"
@@ -128,8 +128,8 @@ const ResetPasswordPage = () => {
             </form>
           )}
 
-          <div className="text-sm mt-6 text-right">
-            <Link to="/" className="text-indigo-400 hover:underline">Back to Login</Link>
+          <div className="flex text-sm mt-6">
+            <Link to="/" className="text-indigo-400 hover:underline text-base font-medium tracking-wide">Back to Login</Link>
           </div>
         </div>
       </div>
