@@ -102,11 +102,12 @@ exports.resetPassword = async (req, res) => {
 // Verify Token Handler
 exports.verifyToken = async (req, res) => {
   const { token } = req.params;
+
   try {
     jwt.verify(token, process.env.JWT_SECRET);
-    res.status(200).json({ valid: true });
+    return res.status(200).json({ valid: true });
   } catch (err) {
-    res.status(400).json({ error: 'Expired or invalid token' });
+    return res.status(401).json({ error: 'Token expired' });
   }
 };
 

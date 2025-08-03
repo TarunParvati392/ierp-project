@@ -24,7 +24,7 @@ const ResetPasswordPage = () => {
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        await api.post(`/api/auth/verify-token/${token}`);
+        await api.post(`/auth/verify-token/${token}`);
       } catch (err) {
         setTokenExpired(true);
       }
@@ -48,7 +48,7 @@ const ResetPasswordPage = () => {
     if (!allValid) return;
 
     try {
-      const res = await api.post(`/api/auth/reset-password/${token}`, { newPassword });
+      const res = await api.post(`/auth/reset-password/${token}`, { newPassword });
       alert(res.data.message);
       navigate('/');
     } catch (err) {
