@@ -14,6 +14,7 @@ const PasswordLogin = () => {
 
         try {
             const res = await api.post('/auth/login', { identifier, password });
+            localStorage.setItem('token', res.data.token);
             console.log(`✅ ${res.data.message}`);
             // You can navigate to dashboard once implemented:
             // navigate(`/dashboard/${res.data.role.toLowerCase()}`);
@@ -50,10 +51,10 @@ const PasswordLogin = () => {
                 <p className="text-red-400 text-sm mt-1">{errorMsg}</p>
             )}
 
-            <div className="flex justify-end text-sm">
+            <div className="flex text-sm mt-6">
                 <a
                     href="/forgot-password"
-                    className="text-indigo-400 hover:underline transition"
+                    className="text-indigo-400 hover:underline transition text-base font-medium tracking-wide"
                 >
                     Forgot Password?
                 </a>
