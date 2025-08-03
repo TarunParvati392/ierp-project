@@ -13,7 +13,7 @@ const ForgotPasswordPage = () => {
     setErrorMsg('');
 
     try {
-      const res = await api.post('/api/auth/forgot-password', { identifier });
+      const res = await api.post('/auth/forgot-password', { identifier });
       setMessage(res.data.message);
     } catch (err) {
       setErrorMsg(err.response?.data?.error || 'Something went wrong');

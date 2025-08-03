@@ -30,7 +30,7 @@ const ResetPasswordPage = () => {
     }
 
     try {
-      const res = await api.post(`/api/auth/reset-password/${token}`, { newPassword });
+      const res = await api.post(`/auth/reset-password/${token}`, { newPassword });
       setMessage(res.data.message);
     } catch (err) {
       setErrorMsg(err.response?.data?.error || 'Link expired or invalid');
