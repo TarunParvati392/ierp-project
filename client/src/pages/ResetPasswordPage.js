@@ -1,41 +1,61 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const ResetPasswordPage = () => {
   const { token } = useParams();
+  const navigate = useNavigate();
+
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const isValidPassword = (pass) =>
-    /^[A-Z][\w@#$%^&+=]{4,}$/.test(pass) &&
-    /[0-9]/.test(pass) &&
-    /[^a-zA-Z0-9]/.test(pass);
+  const [validations, setValidations] = useState({
+    capital: false,
+    special: false,
+    number: false,
+    length: false,
+    match: false,
+  });
+
+  useEffect(() => {
+    const capital = /[A-Z]/.test(newPassword);
+    const special = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+    const number = /\d/.test(newPassword);
+    const length = newPassword.length >= 8;
+    const match = newPassword === confirmPassword && confirmPassword !== '';
+
+    setValidations({ capital, special, number, length, match });
+  }, [newPassword, confirmPassword]);
+
+  const allValid = Object.values(validations).every(Boolean);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     setErrorMsg('');
 
-    if (!isValidPassword(newPassword)) {
-      setErrorMsg('Password must start with capital letter, include number & special char, and be 5+ characters');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setErrorMsg('Passwords do not match');
-      return;
-    }
-
     try {
       const res = await api.post(`/auth/reset-password/${token}`, { newPassword });
-      setMessage(res.data.message);
+      alert(res.data.message);
+      navigate('/');
     } catch (err) {
       setErrorMsg(err.response?.data?.error || 'Link expired or invalid');
     }
   };
+
+  const renderValidation = (condition, label) => (
+    <div className="flex items-center space-x-2 text-sm">
+      {condition ? (
+        <FaCheckCircle className="text-green-400" />
+      ) : (
+        <FaTimesCircle className="text-red-400" />
+      )}
+      <span className={`${condition ? 'text-green-300' : 'text-red-300'}`}>{label}</span>
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
@@ -53,7 +73,7 @@ const ResetPasswordPage = () => {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl p-10">
           <h2 className="text-2xl font-bold mb-6 text-indigo-400">Reset Password</h2>
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="password"
               placeholder="New Password"
@@ -70,15 +90,29 @@ const ResetPasswordPage = () => {
               className="w-full px-3 py-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-indigo-500"
               required
             />
-            {message && <p className="text-green-400 text-sm">{message}</p>}
-            {errorMsg && <p className="text-red-400 text-sm">{errorMsg}</p>}
+
+            <div className="mt-4 space-y-1">
+              {renderValidation(validations.capital, 'One uppercase character')}
+              {renderValidation(validations.special, 'One special character')}
+              {renderValidation(validations.number, 'One number')}
+              {renderValidation(validations.length, 'At least 8 characters')}
+              {renderValidation(validations.match, 'Passwords must match')}
+            </div>
+
+            {errorMsg && <p className="text-red-400 text-sm mt-2">{errorMsg}</p>}
+            {message && <p className="text-green-400 text-sm mt-2">{message}</p>}
+
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded"
+              disabled={!allValid}
+              className={`w-full mt-4 ${
+                allValid ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600 cursor-not-allowed'
+              } text-white font-semibold py-2 px-4 rounded transition-all duration-300`}
             >
               Reset Password
             </button>
           </form>
+
           <div className="text-sm mt-4 text-right">
             <Link to="/" className="text-indigo-400 hover:underline">Back to Login</Link>
           </div>
