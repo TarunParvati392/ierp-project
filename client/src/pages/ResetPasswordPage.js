@@ -11,6 +11,7 @@ const ResetPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [expired, setExpired] = useState(false);
 
   const [validations, setValidations] = useState({
     capital: false,
@@ -42,7 +43,12 @@ const ResetPasswordPage = () => {
       alert(res.data.message);
       navigate('/');
     } catch (err) {
-      setErrorMsg(err.response?.data?.error || 'Link expired or invalid');
+      const error = err.response?.data?.error || '';
+      if (error.toLowerCase().includes('expired') || error.toLowerCase().includes('invalid')) {
+        setExpired(true);
+      } else {
+        setErrorMsg(error || 'Something went wrong');
+      }
     }
   };
 
@@ -59,6 +65,7 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
+      {/* Left Side Title */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-10">
         <div>
           <h1 className="text-7xl md:text-8xl font-extrabold text-indigo-400 leading-tight drop-shadow-2xl">
@@ -70,50 +77,58 @@ const ResetPasswordPage = () => {
         </div>
       </div>
 
+      {/* Right Side Card */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl p-10">
           <h2 className="text-2xl font-bold mb-6 text-indigo-400">Reset Password</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="password"
-              placeholder="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-indigo-500"
-              required
-            />
 
-            <div className="mt-4 space-y-1">
-              {renderValidation(validations.capital, 'One uppercase character')}
-              {renderValidation(validations.special, 'One special character')}
-              {renderValidation(validations.number, 'One number')}
-              {renderValidation(validations.length, 'At least 8 characters')}
-              {renderValidation(validations.match, 'Passwords must match')}
-            </div>
+          {expired ? (
+            <p className="text-red-400 text-lg font-semibold text-center mt-10">
+              Reset Password Time Expired
+            </p>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-3 py-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-indigo-500"
+                required
+              />
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3 py-2 rounded bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-indigo-500"
+                required
+              />
 
-            {errorMsg && <p className="text-red-400 text-sm mt-2">{errorMsg}</p>}
-            {message && <p className="text-green-400 text-sm mt-2">{message}</p>}
+              <div className="mt-4 space-y-1">
+                {renderValidation(validations.capital, 'One uppercase character')}
+                {renderValidation(validations.special, 'One special character')}
+                {renderValidation(validations.number, 'One number')}
+                {renderValidation(validations.length, 'At least 8 characters')}
+                {renderValidation(validations.match, 'Passwords must match')}
+              </div>
 
-            <button
-              type="submit"
-              disabled={!allValid}
-              className={`w-full mt-4 ${
-                allValid ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600 cursor-not-allowed'
-              } text-white font-semibold py-2 px-4 rounded transition-all duration-300`}
-            >
-              Reset Password
-            </button>
-          </form>
+              {errorMsg && <p className="text-red-400 text-sm mt-2">{errorMsg}</p>}
+              {message && <p className="text-green-400 text-sm mt-2">{message}</p>}
 
-          <div className="text-sm mt-4 text-right">
+              <button
+                type="submit"
+                disabled={!allValid}
+                className={`w-full mt-4 ${
+                  allValid ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600 cursor-not-allowed'
+                } text-white font-semibold py-2 px-4 rounded transition-all duration-300`}
+              >
+                Reset Password
+              </button>
+            </form>
+          )}
+
+          <div className="text-sm mt-6 text-right">
             <Link to="/" className="text-indigo-400 hover:underline">Back to Login</Link>
           </div>
         </div>
