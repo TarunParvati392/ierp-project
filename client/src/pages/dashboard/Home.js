@@ -1,8 +1,15 @@
 // pages/dashboard/Home.jsx
 import React from 'react';
+import DashboardCards from '../../components/DashboardCards';
 
 const Home = () => {
-  return <h2 className="text-2xl font-bold">Welcome to your Dashboard!</h2>;
+  const role = 'Student'; // TEMP: Replace with dynamic user data
+
+  return (
+    <div>
+      <DashboardCards role={role} />
+    </div>
+  );
 };
 
 export default Home;

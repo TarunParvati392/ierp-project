@@ -37,8 +37,14 @@ exports.login = async (req, res) => {
     // Success: Send token & role
     return res.status(200).json({
       message: `${user.role} Login Successful`,
-      role: user.role,
-      token
+      token,
+      user: {
+        role: user.role,
+        name: user.name,
+        userId: user.userId,
+        theme: user.theme,
+        profileImage: user.profileImage
+      }
     });
 
   } catch (err) {

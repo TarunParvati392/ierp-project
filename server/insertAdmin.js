@@ -5,19 +5,19 @@ require('dotenv').config();
 const User = require('./models/User');
 
 mongoose.connect(process.env.MONGODB_URI).then(async () => {
-  const hashedPassword = await bcrypt.hash("Admin@123", 10);
+  const hashedPassword = await bcrypt.hash("Student@123", 10);
 
   const admin = new User({
-    userId: "admin001",
-    name: "Admin User",
+    userId: "st001",
+    name: "Student User",
     email: "admin@ierp.com",
     password: hashedPassword,
-    role: "Admin",
+    role: "Student",
     isBlocked: false,
   });
 
   await admin.save();
-  console.log("✅ Admin user inserted successfully.");
+  console.log("✅ Student user inserted successfully.");
   mongoose.disconnect();
 }).catch(err => {
   console.error("❌ Error inserting admin user:", err);

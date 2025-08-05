@@ -12,9 +12,9 @@ const tabs = [
 
 const Sidebar = () => {
   const [hovered, setHovered] = useState(false);
-  const userName = 'Tarun'; // TEMP: Replace later with dynamic name
-  const profileImg = '/default-profile.png'; // TEMP: Replace later with dynamic URL
-
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userName = user.name || 'Guest';
+  const profileImg = user.profileImage || '/default-profile.png';
   return (
     <aside
       className={`bg-[#1f1f1f] transition-all duration-300 h-screen ${

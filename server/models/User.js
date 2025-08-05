@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   profileImage: { type: String, default: '/uploads/default.png' },
   facelock: String, // base64 or buffer
   isBlocked: { type: Boolean, default: false },
+  theme: { type: String, enum: ['dark', 'light', 'colorful'], default: 'dark' },
 });
 
 module.exports = mongoose.model('User', userSchema);

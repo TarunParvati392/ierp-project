@@ -14,10 +14,12 @@ const PasswordLogin = () => {
 
         try {
             const res = await api.post('/auth/login', { identifier, password });
-            localStorage.setItem('token', res.data.token);
+            const {token,user} = res.data;
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
             console.log(`✅ ${res.data.message}`);
             // You can navigate to dashboard once implemented:
-            // navigate(`/dashboard/${res.data.role.toLowerCase()}`);
+            navigate('/dashboard');
         } catch (err) {
             if (err.response?.data?.error) {
                 setErrorMsg(err.response.data.error);

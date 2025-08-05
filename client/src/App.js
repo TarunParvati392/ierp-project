@@ -6,6 +6,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardLayout from './layouts/DashboardLayout';
 import Home from './pages/dashboard/Home';
 import FaceSetupPage from './pages/FaceSetupPage';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 const App = () => {
   return (
@@ -14,10 +15,9 @@ const App = () => {
         <Route path="/" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-        <Route path='/face-setup' element={<FaceSetupPage />} />
         {/* Protected Dashboard */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route path='' element={<Home />} />
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+          <Route index element={<Home />} />
         </Route>
       </Routes>
     </Router>
