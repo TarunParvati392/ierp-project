@@ -7,12 +7,15 @@ import DashboardLayout from './layouts/DashboardLayout';
 import Home from './pages/dashboard/Home';
 import FaceSetupPage from './pages/FaceSetupPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import { ThemeProvider } from './context/ThemeContext';
 
 const App = () => {
   return (
+    <ThemeProvider>
     <Router>
       <Routes>
         <Route path="/" element={<LoginPage />} />
+        
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         {/* Protected Dashboard */}
@@ -21,6 +24,7 @@ const App = () => {
         </Route>
       </Routes>
     </Router>
+    </ThemeProvider>
   );
 };
 

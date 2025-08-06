@@ -1,6 +1,7 @@
 // components/Sidebar.jsx
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { ThemeContext } from '../context/ThemeContext';
 import { FaUser, FaBook, FaClipboardList, FaCalendarAlt, FaSignOutAlt } from 'react-icons/fa';
 
 const tabs = [
@@ -12,17 +13,25 @@ const tabs = [
 
 const Sidebar = () => {
   const [hovered, setHovered] = useState(false);
+  const { theme } = React.useContext(ThemeContext);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userName = user.name || 'Guest';
   const profileImg = user.profileImage || '/default-profile.png';
   return (
-    <aside
-      className={`bg-[#1f1f1f] transition-all duration-300 h-screen ${
-        hovered ? 'w-64' : 'w-20'
-      } fixed md:static z-50`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+<aside
+  className={`transition-all duration-300 h-screen z-50 fixed md:static
+    ${
+      theme === 'dark'
+        ? 'bg-[#1f1f1f]'
+        : theme === 'light'
+        ? 'bg-white text-gray-900'
+        : 'bg-gradient-to-b from-pink-200 via-purple-100 to-blue-100 text-gray-900'
+    }
+    ${hovered ? 'w-64' : 'w-20'}`}
+  onMouseEnter={() => setHovered(true)}
+  onMouseLeave={() => setHovered(false)}
+>
+
       <div className={`p-4 flex flex-col transition-all duration-300 ${hovered ? 'items-center' : 'items-center'}`}>
         <img
           src={profileImg}

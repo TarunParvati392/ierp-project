@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const authMiddleware = require('../middleware/auth');
+const { theme } = require('../controllers/userController');
 
+router.patch('/theme', authMiddleware, theme);
 
 module.exports = router;
