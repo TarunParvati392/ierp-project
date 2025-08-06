@@ -1,28 +1,28 @@
 // layouts/DashboardLayout.jsx
-import React from 'react';
+import React, { useEffect, useContext } from 'react';
+import { useNavigate, Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
-import { Outlet } from 'react-router-dom';
-
+import { getThemeStyles } from '../utils/themeStyles';
 
 const DashboardLayout = () => {
-  const { theme, themes } = React.useContext(ThemeContext);
+  const { theme, themes } = useContext(ThemeContext);
   const navigate = useNavigate();
+  const styles = getThemeStyles(theme);
 
   useEffect(() => {
-    if (!localStorage.getItem('token')){
+    if (!localStorage.getItem('token')) {
       navigate('/');
     }
   }, [navigate]);
+
   return (
-    <div className={`min-h-screen ${themes[theme].themeClass} flex`}>
-      <Sidebar theme={theme} themes={themes} />
+    <div className={`min-h-screen flex ${themes[theme].themeClass} transition-all duration-300`}>
+      <Sidebar />
       <div className="flex flex-col flex-1">
-        <Header theme={theme} themes={themes} />
-        <main className="p-6 overflow-y-auto flex-1">
+        <Header />
+        <main className={`p-6 overflow-y-auto flex-1 transition-all duration-300 ${styles.card}`}>
           <Outlet />
         </main>
       </div>

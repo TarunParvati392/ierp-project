@@ -24,7 +24,7 @@ export const ThemeProvider = ({ children }) => {
     }
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/user/theme`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/user/theme`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
