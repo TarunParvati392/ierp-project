@@ -3,7 +3,7 @@ import React, { useState, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 import { getThemeStyles } from '../utils/themeStyles';
-import { tabsByRole } from '../utils/roleTabs';
+import { getTabsForRole } from '../utils/tabsByRole'; 
 import { FaSignOutAlt } from 'react-icons/fa';
 
 const Sidebar = () => {
@@ -13,8 +13,7 @@ const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userName = user.name || 'Guest';
   const profileImg = user.profileImage || '/default-profile.png';
-  const role = user.role || 'guest';
-  const roleTabs = tabsByRole[role] || [];
+  const tabs = getTabsForRole(user.role);
 
   return (
     <aside
@@ -43,7 +42,7 @@ const Sidebar = () => {
       </div>
 
       <nav className="mt-10 space-y-4 px-4">
-        {roleTabs.map((tab, index) => (
+        {tabs.map((tab, index) => (
           <NavLink
             to={tab.path}
             key={index}
