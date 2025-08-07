@@ -7,9 +7,23 @@ const userSchema = new mongoose.Schema({
   password: String,
   role: String,
   profileImage: { type: String, default: '/uploads/default.png' },
-  facelock: String, // base64 or buffer
+
+  // FaceLock Fields
+  facelock: {
+    type: String, // base64 of face embedding or image
+  },
+  facelockSignature: {
+    type: String, // optional - signature gesture (as video base64 or gesture data)
+  },
+
   isBlocked: { type: Boolean, default: false },
-  theme: { type: String, enum: ['dark', 'light', 'colorful'], default: 'dark' },
+
+  // Theme
+  theme: {
+    type: String,
+    enum: ['dark', 'light', 'colorful'],
+    default: 'dark',
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);
