@@ -5,7 +5,7 @@ export const getThemeStyles = (theme) => {
 
   const styles = {
     dark: {
-      card: `${baseCard} bg-[#1f1f1f] text-white border border-white/10`,
+      card: `${baseCard} bg-[#121212] text-white border border-white/10`,
       tab: 'text-gray-300 hover:text-white hover:bg-indigo-600',
       activeTab: 'bg-indigo-700 text-white',
       tabIcon: `${baseTabIcon} text-indigo-400`,
@@ -13,7 +13,7 @@ export const getThemeStyles = (theme) => {
       button: `${baseButton} bg-indigo-600 hover:bg-indigo-700 text-white`,
     },
     light: {
-      card: `${baseCard} bg-white text-gray-800 border border-gray-300`,
+      card: `${baseCard} bg-gray-100 text-gray-800 border border-gray-300`,
       tab: 'text-gray-700 hover:text-indigo-600 hover:bg-gray-100',
       activeTab: 'bg-indigo-100 text-indigo-700',
       tabIcon: `${baseTabIcon} text-indigo-600`,
