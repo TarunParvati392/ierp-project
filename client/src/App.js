@@ -5,7 +5,9 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardLayout from './layouts/DashboardLayout';
 import Home from './pages/dashboard/Home';
-import FaceSetupPage from './pages/FaceSetupPage';
+//import FaceSetupPage from './pages/FaceSetupPage';
+//import Profile from './pages/dashboard/Profile';
+import ProfileTab from './pages/dashboard/ProfileTab';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -21,6 +23,7 @@ const App = () => {
         {/* Protected Dashboard */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Home />} />
+          <Route path="profile" element={<ProfileTab />} />
         </Route>
       </Routes>
     </Router>

@@ -1,6 +1,6 @@
 // components/Header.jsx
 import React, { useContext } from 'react';
-import { FaMoon, FaSun, FaPalette } from 'react-icons/fa';
+import { FaMoon, FaSun, FaPalette, FaSignOutAlt } from 'react-icons/fa';
 import { ThemeContext } from '../context/ThemeContext';
 import { getThemeStyles } from '../utils/themeStyles';
 
@@ -42,6 +42,18 @@ const Header = () => {
           }`}
         >
           <FaPalette />
+        </button>
+        <button
+          title="Logout"
+          onClick={() => {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+          }}
+          className={`w-10 h-10 text-xl rounded-full flex items-center justify-center bg-red-600 text-white shadow ${
+            theme === 'dark' ? 'ring-2 ring-white' : ''
+          }`}
+        >
+          <FaSignOutAlt />
         </button>
       </div>
     </header>

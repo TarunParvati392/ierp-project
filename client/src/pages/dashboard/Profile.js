@@ -1,224 +1,199 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Webcam from 'react-webcam';
-import { FaUpload, FaSave, FaCamera, FaLock } from 'react-icons/fa';
+import React, { useContext, useEffect, useState } from 'react';
+import { ThemeContext } from '../../context/ThemeContext';
 
 const Profile = () => {
-  const user = JSON.parse(localStorage.getItem('user')) || {};
-  const [name, setName] = useState(user.name);
-  const [userId] = useState(user.userId);
-  const [role] = useState(user.role);
-  const [profileImage, setProfileImage] = useState(user.profileImage || '/uploads/default.png');
-  const [imagePreview, setImagePreview] = useState(null);
+  const { theme } = useContext(ThemeContext);
+  const [profileImage, setProfileImage] = useState('/uploads/default.png');
 
-  // Password
+  // Dummy user data (replace with real login data later)
+  const [userData, setUserData] = useState({
+    name: 'Tarun Parvathi',
+    userId: 'TARUN123',
+    email: 'tarun@example.com',
+    role: 'Admin',
+  });
+
+  // Profile Image Handler
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result); // frontend preview
+        // TODO: Upload to backend
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Password States
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [validations, setValidations] = useState({
+    uppercase: false,
+    number: false,
+    specialChar: false,
+    minLength: false,
+    match: false,
+  });
 
-  // Face login
-  const [showModal, setShowModal] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const webcamRef = useRef(null);
-  const [capturedVideo, setCapturedVideo] = useState(null);
-  const [recorder, setRecorder] = useState(null);
-  const mediaChunks = useRef([]);
+  const validationTexts = {
+    uppercase: 'At least 1 uppercase letter',
+    number: 'At least 1 number',
+    specialChar: 'At least 1 special character',
+    minLength: 'Minimum 8 characters',
+    match: 'New and confirm password must match',
+  };
 
+  // Validate on new password
+  const handleNewPassword = (password) => {
+    setNewPassword(password);
+    setValidations({
+      uppercase: /[A-Z]/.test(password),
+      number: /[0-9]/.test(password),
+      specialChar: /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]/.test(password),
+      minLength: password.length >= 8,
+      match: password === confirmPassword,
+    });
+  };
+
+  // Live validation on confirm password
   useEffect(() => {
-    if (newPassword !== confirmPassword && confirmPassword !== '') {
-      setPasswordError('Passwords do not match');
-    } else {
-      setPasswordError('');
-    }
-  }, [newPassword, confirmPassword]);
+    setValidations((prev) => ({
+      ...prev,
+      match: newPassword === confirmPassword,
+    }));
+  }, [confirmPassword]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImagePreview(URL.createObjectURL(file));
-    }
+  const isFormValid = () => {
+    return Object.values(validations).every(Boolean) && oldPassword.length > 0;
   };
 
-  const handleSaveProfileImage = async () => {
-    // Upload image to backend here
-    alert('Profile image saved!');
-    localStorage.setItem(
-      'user',
-      JSON.stringify({ ...user, profileImage: imagePreview })
-    );
-    setProfileImage(imagePreview);
-    setImagePreview(null);
-  };
-
-  const handleChangePassword = async () => {
-    if (passwordError || !oldPassword || !newPassword) {
-      alert('Fix password issues');
-      return;
-    }
-    // Send old and new password to backend for update
-    alert('Password updated successfully!');
-    setOldPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-  };
-
-  const startRecording = async () => {
-    const stream = webcamRef.current.stream;
-    const options = { mimeType: 'video/webm' };
-    const mediaRecorder = new MediaRecorder(stream, options);
-    mediaChunks.current = [];
-
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        mediaChunks.current.push(e.data);
-      }
-    };
-
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(mediaChunks.current, { type: 'video/webm' });
-      const videoURL = URL.createObjectURL(blob);
-      setCapturedVideo(videoURL);
-      setRecording(false);
-    };
-
-    mediaRecorder.start();
-    setRecorder(mediaRecorder);
-    setRecording(true);
-
-    setTimeout(() => {
-      mediaRecorder.stop();
-    }, 5000); // 5 sec
-  };
-
-  const handleFaceSave = async () => {
-    const password = prompt('Enter your password to confirm');
-    if (!password) return;
-    // Send video blob + password to backend for face embedding update
-    alert('Face updated successfully!');
-    setShowModal(false);
+  const handlePasswordUpdate = () => {
+    alert('Password updated (frontend only for now)');
+    // TODO: Integrate backend API
   };
 
   return (
-    <div className="text-white p-6">
-      <h2 className="text-2xl font-bold mb-6">Profile Settings</h2>
-
-      {/* Basic Info */}
-      <div className="bg-gray-800 p-4 rounded mb-6">
-        <p><strong>Name:</strong> {name}</p>
-        <p><strong>User ID:</strong> {userId}</p>
-        <p><strong>Role:</strong> {role}</p>
-      </div>
-
-      {/* Profile Image Update */}
-      <div className="bg-gray-800 p-4 rounded mb-6">
-        <h3 className="text-lg mb-2 font-semibold">Update Profile Image</h3>
-        <img
-          src={imagePreview || profileImage}
-          alt="Profile"
-          className="w-24 h-24 rounded-full mb-2"
-        />
-        <input type="file" accept="image/*" onChange={handleImageChange} />
-        {imagePreview && (
-          <button
-            onClick={handleSaveProfileImage}
-            className="bg-blue-600 px-3 py-1 rounded mt-2 flex items-center gap-2"
-          >
-            <FaSave /> Save Image
-          </button>
-        )}
-      </div>
-
-      {/* Password Update */}
-      <div className="bg-gray-800 p-4 rounded mb-6">
-        <h3 className="text-lg mb-2 font-semibold">Update Password</h3>
-        <div className="flex flex-col gap-2">
-          <input
-            type="password"
-            placeholder="Old Password"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            className="bg-gray-700 p-2 rounded"
+    <div className={`min-h-screen p-6 transition-all duration-300 ${theme.background} text-white`}>
+      <div className={`max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 bg-opacity-50 p-6 rounded-lg shadow-lg ${theme.card}`}>
+        
+        {/* Profile Image + Upload */}
+        <div className="flex flex-col items-center">
+          <img
+            src={profileImage}
+            alt="Profile"
+            className="w-40 h-40 rounded-full object-cover border-4 border-white shadow-lg"
           />
-          <input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="bg-gray-700 p-2 rounded"
-          />
-          <input
-            type="password"
-            placeholder="Confirm New Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="bg-gray-700 p-2 rounded"
-          />
-          {passwordError && <p className="text-red-400">{passwordError}</p>}
-          <button
-            onClick={handleChangePassword}
-            className="bg-green-600 px-3 py-1 rounded flex items-center gap-2 mt-2"
-          >
-            <FaLock /> Update Password
-          </button>
+          <label className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded cursor-pointer">
+            Upload New Photo
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleProfileImageChange}
+            />
+          </label>
         </div>
-      </div>
 
-      {/* Face Login Update */}
-      <div className="bg-gray-800 p-4 rounded mb-6">
-        <h3 className="text-lg mb-2 font-semibold">Update Face Lock</h3>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-purple-600 px-3 py-1 rounded flex items-center gap-2"
-        >
-          <FaCamera /> Record New Face
-        </button>
-      </div>
-
-      {/* Modal for Face Recording */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50">
-          <div className="bg-gray-900 p-6 rounded shadow-lg w-[500px]">
-            <h2 className="text-xl font-bold mb-4">Record Your Face Movement</h2>
-            {capturedVideo ? (
-              <>
-                <video src={capturedVideo} controls className="mb-4 w-full" />
-                <button
-                  onClick={handleFaceSave}
-                  className="bg-blue-600 px-4 py-2 rounded mr-2"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => {
-                    setCapturedVideo(null);
-                    setRecording(false);
-                  }}
-                  className="bg-red-600 px-4 py-2 rounded"
-                >
-                  Retake
-                </button>
-              </>
-            ) : (
-              <>
-                <Webcam ref={webcamRef} className="w-full rounded mb-4" />
-                <button
-                  onClick={startRecording}
-                  className="bg-green-600 px-4 py-2 rounded"
-                  disabled={recording}
-                >
-                  {recording ? 'Recording...' : 'Start Recording'}
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => setShowModal(false)}
-              className="text-sm text-gray-400 mt-4 block underline"
-            >
-              Cancel
-            </button>
+        {/* User Info */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">Name</label>
+            <input
+              type="text"
+              value={userData.name}
+              readOnly
+              className="w-full mt-1 p-2 rounded bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">User ID</label>
+            <input
+              type="text"
+              value={userData.userId}
+              readOnly
+              className="w-full mt-1 p-2 rounded bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Email</label>
+            <input
+              type="text"
+              value={userData.email}
+              readOnly
+              className="w-full mt-1 p-2 rounded bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Role</label>
+            <input
+              type="text"
+              value={userData.role}
+              readOnly
+              className="w-full mt-1 p-2 rounded bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+            />
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Password Change Section */}
+      <div className={`col-span-2 mt-10 bg-opacity-50 p-6 rounded-lg shadow-lg ${theme.card}`}>
+        <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="font-medium">Old Password</label>
+            <input
+              type="password"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              className="w-full mt-1 p-2 rounded bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="font-medium">New Password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => handleNewPassword(e.target.value)}
+              className="w-full mt-1 p-2 rounded bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="font-medium">Confirm Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full mt-1 p-2 rounded bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
+            />
+          </div>
+        </div>
+
+        {/* Live Validation Feedback */}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          {Object.entries(validations).map(([key, isValid]) => (
+            <div key={key} className={`flex items-center gap-2 ${isValid ? 'text-green-500' : 'text-red-500'}`}>
+              <span>{isValid ? '✔️' : '❌'}</span>
+              {validationTexts[key]}
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={handlePasswordUpdate}
+          disabled={!isFormValid()}
+          className={`mt-6 px-6 py-2 rounded text-white transition ${
+            isFormValid() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'
+          }`}
+        >
+          Change Password
+        </button>
+      </div>
     </div>
   );
 };

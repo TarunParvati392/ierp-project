@@ -18,11 +18,11 @@ const DashboardLayout = () => {
   }, [navigate]);
 
   return (
-    <div className={`min-h-screen flex ${themes[theme].themeClass} transition-all duration-300`}>
+    <div className={`h-screen flex ${themes[theme].themeClass} transition-all duration-300 overflow-hidden`}>
       <Sidebar />
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
-        <main className={`p-6 overflow-y-auto flex-1 transition-all duration-300 ${styles.card}`}>
+        <main className={`flex-1 overflow-y-auto p-6 transition-all duration-300 ${styles.card}`}>
           <Outlet />
         </main>
       </div>

@@ -3,8 +3,7 @@ import React, { useState, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 import { getThemeStyles } from '../utils/themeStyles';
-import { getTabsForRole } from '../utils/tabsByRole'; 
-import { FaSignOutAlt } from 'react-icons/fa';
+import { getTabsForRole } from '../utils/tabsByRole';
 
 const Sidebar = () => {
   const [hovered, setHovered] = useState(false);
@@ -17,7 +16,7 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`${themes[theme].sidebarClass} h-screen z-50 fixed md:static transition-all duration-300 ${
+      className={`${themes[theme].sidebarClass} h-screen z-50 fixed md:static transition-all duration-300 overflow-y-auto scrollbar-thin ${
         hovered ? 'w-64' : 'w-20'
       }`}
       onMouseEnter={() => setHovered(true)}
@@ -41,7 +40,7 @@ const Sidebar = () => {
         )}
       </div>
 
-      <nav className="mt-10 space-y-4 px-4">
+      <nav className="mt-10 space-y-4 px-4 pb-20">
         {tabs.map((tab, index) => (
           <NavLink
             to={tab.path}
@@ -57,19 +56,6 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-
-      <div className="absolute bottom-4 w-full px-4">
-        <button
-          onClick={() => {
-            localStorage.removeItem('token');
-            window.location.href = '/';
-          }}
-          className="flex items-center space-x-2 text-red-400 hover:text-red-500 text-sm"
-        >
-          <FaSignOutAlt className="text-lg" />
-          {hovered && <span>Logout</span>}
-        </button>
-      </div>
     </aside>
   );
 };
