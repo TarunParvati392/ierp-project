@@ -1,17 +1,32 @@
-// components/Sidebar.jsx
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 import { getThemeStyles } from '../utils/themeStyles';
 import { getTabsForRole } from '../utils/tabsByRole';
+import api from '../utils/api';
 
 const Sidebar = () => {
   const [hovered, setHovered] = useState(false);
   const { theme, themes } = useContext(ThemeContext);
   const styles = getThemeStyles(theme);
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
+
+  // Re-fetch localStorage user on storage change
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setUser(JSON.parse(localStorage.getItem('user') || '{}'));
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const userName = user.name || 'Guest';
   const profileImg = user.profileImage || '/default-profile.png';
+  const profileImgSrc = profileImg.startsWith('http')
+    ? profileImg
+    : `${api.defaults.baseURL}${profileImg}`;
+
   const tabs = getTabsForRole(user.role);
 
   return (
@@ -24,7 +39,7 @@ const Sidebar = () => {
     >
       <div className="p-4 flex flex-col items-center transition-all duration-300">
         <img
-          src={profileImg}
+          src={profileImgSrc}
           alt="Profile"
           className={`rounded-full transition-all duration-300 border-2 ${
             hovered ? 'w-20 h-20' : 'w-12 h-12'

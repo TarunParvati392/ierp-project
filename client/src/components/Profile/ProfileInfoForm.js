@@ -1,21 +1,70 @@
-// components/Profile/ProfileInfoForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { ThemeContext } from '../../context/ThemeContext';
 import { getThemeStyles } from '../../utils/themeStyles';
+import api from '../../utils/api';
 
 const ProfileInfoForm = () => {
-  const { theme } = React.useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const Styles = getThemeStyles(theme);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const [name, setName] = useState(user.name || '');
-  const [email, setEmail] = useState(user.email || '');
-  const [profileImage, setProfileImage] = useState(null);
 
-  const handleUpdate = () => {
-    // Backend update logic will be added later
-    alert('Profile updated successfully.');
+  const [profileImage, setProfileImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null); // ref to reset file input
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        alert('Only JPG and PNG Files are Accepted');
+        fileInputRef.current.value = ''; // clear input
+        setProfileImage(null);
+        return;
+      }
+      if (file.size > 300 * 1024) {
+        alert('File size should not exceed 300 KB');
+        fileInputRef.current.value = ''; // clear input
+        setProfileImage(null);
+        return;
+      }
+      setProfileImage(file);
+    }
   };
+
+const handleUpdate = async () => {
+  try {
+    if (!profileImage) {
+      alert('Please Select a File');
+      return;
+    }
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('profileImage', profileImage);
+
+    const token = localStorage.getItem('token');
+
+    const res = await api.post('/user/profile-image', formData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    alert('Profile image updated successfully.');
+
+    // Update localStorage with new user data
+    localStorage.setItem('user', JSON.stringify(res.data.user));
+
+    // Reset state & file input
+    setProfileImage(null);
+    fileInputRef.current.value = '';
+
+  } catch (err) {
+    const message = err.response?.data?.error || 'Something Went Wrong.';
+    alert(message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className={`${Styles.card} space-y-4 rounded-xl`}>
@@ -27,7 +76,7 @@ const ProfileInfoForm = () => {
             type="text"
             value={user.userId}
             disabled
-            className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500 cursor-not-allowed"
+            className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500"
           />
         </div>
         <div>
@@ -36,7 +85,7 @@ const ProfileInfoForm = () => {
             type="text"
             value={user.role}
             disabled
-            className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500 cursor-not-allowed"
+            className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500"
           />
         </div>
         <div>
@@ -44,8 +93,8 @@ const ProfileInfoForm = () => {
           <input
             type="text"
             value={user.name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500 cursor-not-allowed"
+            disabled
+            className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500"
           />
         </div>
         <div>
@@ -53,21 +102,27 @@ const ProfileInfoForm = () => {
           <input
             type="email"
             value={user.email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500 cursor-not-allowed"
+            disabled
+            className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500"
           />
         </div>
-        <div >
+        <div>
           <label className="block mb-1 text-sm font-medium">Profile Image</label>
           <input
             type="file"
-            onChange={(e) => setProfileImage(e.target.files[0])}
-            className="input"
+            accept=".jpg,.jpeg,.png"
+            onChange={handleFileChange}
+            ref={fileInputRef} // attach ref
+            className="w-full"
           />
         </div>
       </div>
-      <button onClick={handleUpdate} className={`${Styles.button} mt-4`}>
-        Update Profile
+      <button
+        onClick={handleUpdate}
+        className={`${Styles.button} mt-4`}
+        disabled={loading}
+      >
+        {loading ? 'Updating...' : 'Update Profile'}
       </button>
     </div>
   );
