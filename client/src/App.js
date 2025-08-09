@@ -11,6 +11,7 @@ import ProfileTab from './pages/dashboard/ProfileTab';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { ThemeProvider } from './context/ThemeContext';
 
+
 const App = () => {
   return (
     <ThemeProvider>
@@ -18,9 +19,9 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-        {/* Protected Dashboard */}
+       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+       {/* Protected Dashboard */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Home />} />
           <Route path="profile" element={<ProfileTab />} />

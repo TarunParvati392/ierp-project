@@ -4,16 +4,23 @@ import { getRandomGradient } from '../utils/gradientUtils';
 
 export const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    return user.theme || 'dark';
-  });
+// Safe localStorage parser to avoid crashes
+const getSafeUser = () => {
+  try {
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+};
 
+export const ThemeProvider = ({ children }) => {
+  const initialUser = getSafeUser();
+  const [theme, setTheme] = useState(initialUser.theme || 'dark');
   const [colorfulGradient, setColorfulGradient] = useState(getRandomGradient());
 
   useEffect(() => {
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const currentUser = getSafeUser();
     const userTheme = currentUser.theme || 'dark';
     setTheme(userTheme);
 
@@ -40,7 +47,7 @@ export const ThemeProvider = ({ children }) => {
       });
 
       if (res.ok) {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const user = getSafeUser();
         user.theme = newTheme;
         localStorage.setItem('user', JSON.stringify(user));
       }

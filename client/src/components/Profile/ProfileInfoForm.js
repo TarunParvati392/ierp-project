@@ -1,7 +1,6 @@
 import React, { useState, useContext, useRef } from 'react';
 import { ThemeContext } from '../../context/ThemeContext';
 import { getThemeStyles } from '../../utils/themeStyles';
-import api from '../../utils/api';
 
 const ProfileInfoForm = () => {
   const { theme } = useContext(ThemeContext);
@@ -33,36 +32,33 @@ const ProfileInfoForm = () => {
     }
   };
 
-const handleUpdate = async () => {
+// In your Profile Info component (where you handle image upload)
+const handleImageUpdate = async (formData) => {
   try {
-    if (!profileImage) {
-      alert('Please Select a File');
-      return;
-    }
-    setLoading(true);
-    const formData = new FormData();
-    formData.append('profileImage', profileImage);
-
-    const token = localStorage.getItem('token');
-
-    const res = await api.post('/user/profile-image', formData, {
-      headers: { Authorization: `Bearer ${token}` }
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/user/profile-image`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
     });
 
-    alert('Profile image updated successfully.');
+    if (!res.ok) throw new Error('Failed to update image');
 
-    // Update localStorage with new user data
-    localStorage.setItem('user', JSON.stringify(res.data.user));
+    const data = await res.json();
 
-    // Reset state & file input
-    setProfileImage(null);
-    fileInputRef.current.value = '';
+    // Update localStorage user first
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    storedUser.profileImage = data.profileImage; // backend returns updated path
+    localStorage.setItem('user', JSON.stringify(storedUser));
 
+    // Now reload so Sidebar + ThemeContext get updated user
+    window.location.reload();
   } catch (err) {
-    const message = err.response?.data?.error || 'Something Went Wrong.';
-    alert(message);
-  } finally {
-    setLoading(false);
+    console.error(err);
+    alert('Error updating profile image');
+    fileInputRef.current.value = ''; // clear input
+    setProfileImage(null);
   }
 };
 
@@ -118,12 +114,21 @@ const handleUpdate = async () => {
         </div>
       </div>
       <button
-        onClick={handleUpdate}
-        className={`${Styles.button} mt-4`}
-        disabled={loading}
-      >
-        {loading ? 'Updating...' : 'Update Profile'}
-      </button>
+  onClick={() => {
+    if (!profileImage) {
+      alert("Please select an image first");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("profileImage", profileImage);
+    handleImageUpdate(formData);
+  }}
+  className={`${Styles.button} mt-4`}
+  disabled={loading}
+>
+  {loading ? "Updating..." : "Update Profile"}
+</button>
+
     </div>
   );
 };
