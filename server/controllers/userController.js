@@ -18,21 +18,30 @@ exports.theme = async (req, res) => {
 // Profile Image Update Route
 exports.updateProfileImage = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    const userId = req.user.id;
-    const file = req.file;
+    const userId = req.user.id; // from auth middleware
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const imagePath = `/uploads/${file.filename}`;
+    // Delete old image if not default
+    if (user.profileImage && user.profileImage !== "/uploads/default.png") {
+      const oldImagePath = path.join(__dirname, "..", user.profileImage);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath); // delete the file
+      }
+    }
 
-    await User.findByIdAndUpdate(userId, { profileImage: imagePath });
-    
+    // Save new image path
+    user.profileImage = `/uploads/${req.file.filename}`;
+    await user.save();
 
-    res.status(200).json({ message: 'Profile image updated successfully', profileImage: imagePath });
+    res.json({
+      message: "Profile image updated successfully",
+      profileImage: user.profileImage,
+    });
   } catch (err) {
-    console.error('Profile image update error:', err);
-    res.status(500).json({ error: 'Failed to update profile image' });
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 };

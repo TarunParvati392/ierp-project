@@ -51,7 +51,8 @@ const handleImageUpdate = async (formData) => {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
     storedUser.profileImage = data.profileImage; // backend returns updated path
     localStorage.setItem('user', JSON.stringify(storedUser));
-
+    alert("Profile image updated successfully");
+    
     // Now reload so Sidebar + ThemeContext get updated user
     window.location.reload();
   } catch (err) {
