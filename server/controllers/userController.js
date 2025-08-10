@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -43,5 +44,33 @@ exports.updateProfileImage = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+//Update Password
+exports.updatePassword = async (req,res) =>{
+  try{
+    const userId = req.user.id; // from auth middleware
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user){
+      return res.status(404).json({ error: 'User not found' });
+    }
+    //Check if Current Password match
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Current Password is Incorrect' });
+    }
+
+    //Hash New Password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+
+    res.json({ message: 'Password Updated Successfully' });
+  } catch (error){
+    res.status(500).json({error: 'Server Error' });
   }
 };

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ThemeContext } from '../../context/ThemeContext';
 import { getThemeStyles } from '../../utils/themeStyles';
+import api from '../../utils/api';
 
 
 const PasswordChangeForm = () => {
@@ -11,6 +12,7 @@ const PasswordChangeForm = () => {
   const [current, setCurrent] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const validations = {
     uppercase: /[A-Z]/.test(newPass),
@@ -22,9 +24,25 @@ const PasswordChangeForm = () => {
 
   const allValid = Object.values(validations).every(Boolean);
 
-  const handleChangePassword = () => {
-    // Backend logic later
-    alert('Password changed successfully.');
+  const handleChangePassword = async () => {
+    setLoading(true);
+    try{
+      const token = localStorage.getItem('token');
+      const res = await api.put('/user/update-password', {
+        currentPassword: current,
+        newPassword: newPass,
+      }, {
+        headers: { Authorization: `Bearer ${token}`},
+      });
+      alert(res.data.message);
+      setCurrent('');
+      setNewPass('');
+      setConfirm('');
+    } catch (err) {
+      alert(err.response.data.error);
+    } finally {
+      setLoading(false)
+    }
   };
 
   return (
@@ -73,9 +91,9 @@ const PasswordChangeForm = () => {
       <button
         onClick={handleChangePassword}
         className={`${Styles.button} mt-4`}
-        disabled={!allValid}
+        disabled={!allValid || loading}
       >
-        Update Password
+        {loading ? 'Updating...' : 'Update Password' }
       </button>
     </div>
   );
