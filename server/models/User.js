@@ -10,11 +10,19 @@ const userSchema = new mongoose.Schema({
 
   // FaceLock Fields
   facelock: {
-    type: String, // base64 of face embedding or image
+    type: [Number], // Numeric face embeddings
+    default: []
   },
   facelockSignature: {
-    type: String, // optional - signature gesture (as video base64 or gesture data)
+    type: String, 
+    default: ''
   },
+  gestureData: {
+    type: String,
+    default:''
+  },
+  facelockUpdatedAt: { type: Date, default: null },
+  facelockFailedAttempts: { type: Number, default: 0 },
 
   isBlocked: { type: Boolean, default: false },
 
