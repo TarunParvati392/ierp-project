@@ -25,6 +25,9 @@ app.use('/api/auth', authRoutes);
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/user', userRoutes);
 
+const faceLockRoutes = require('./routes/faceLockRoutes');
+app.use('/api/facelock', faceLockRoutes);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

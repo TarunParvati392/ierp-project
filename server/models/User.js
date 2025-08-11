@@ -1,3 +1,4 @@
+// models/User.js
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -10,23 +11,20 @@ const userSchema = new mongoose.Schema({
 
   // FaceLock Fields
   facelock: {
-    type: [Number], // Numeric face embeddings
-    default: []
+    type: [Number], // Face embeddings
+    default: [],
+    validate: v => Array.isArray(v) && v.length > 0
   },
-  facelockSignature: {
-    type: String, 
+  facelockGesture: {
+    type: String, // Randomly assigned gesture name/code
     default: ''
-  },
-  gestureData: {
-    type: String,
-    default:''
   },
   facelockUpdatedAt: { type: Date, default: null },
   facelockFailedAttempts: { type: Number, default: 0 },
 
   isBlocked: { type: Boolean, default: false },
 
-  // Theme
+  // Theme preference
   theme: {
     type: String,
     enum: ['dark', 'light', 'colorful'],
