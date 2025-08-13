@@ -2,7 +2,7 @@
 import React from 'react';
 import ProfileInfoForm from '../../components/Profile/ProfileInfoForm';
 import PasswordChangeForm from '../../components/Profile/PasswordChangeForm';
-import FaceLockUpdate from '../../components/Profile/FaceLockUpdate';
+//import FaceLockUpdate from '../../components/Profile/FaceLockUpdate';
 
 const ProfileTab = () => {
   return (
@@ -10,7 +10,7 @@ const ProfileTab = () => {
       <h2 className="text-2xl font-bold mb-4">My Profile</h2>
       <ProfileInfoForm />
       <PasswordChangeForm />
-      <FaceLockUpdate />
+      {/* <FaceLockUpdate /> */}
     </div>
   );
 };
