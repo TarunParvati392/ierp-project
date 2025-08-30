@@ -2,25 +2,13 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  userId: { type: String, required: true, unique: true },
-  name: String,
+  userId: { type: String, required: true, unique: true }, // with Prefix
+  name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: String,
-  role: String,
-  profileImage: { type: String, default: '/uploads/default.png' },
+  password: { type: String, required: true },
+  role: { type: String, required: true },
 
-  // FaceLock Fields
-  facelock: {
-    type: [Number], // Face embeddings
-    default: [],
-    validate: v => Array.isArray(v) && v.length > 0
-  },
-  facelockGesture: {
-    type: String, // Randomly assigned gesture name/code
-    default: ''
-  },
-  facelockUpdatedAt: { type: Date, default: null },
-  facelockFailedAttempts: { type: Number, default: 0 },
+  profileImage: { type: String, default: '/uploads/default.png' },
 
   isBlocked: { type: Boolean, default: false },
 
@@ -29,7 +17,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['dark', 'light', 'colorful'],
     default: 'dark',
-  }
-});
+  },
+
+  // 🔗 References
+  batch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', default: null },
+  section_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', default: null } // optional
+}, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
