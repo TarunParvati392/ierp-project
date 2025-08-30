@@ -6,17 +6,20 @@ const ForgotPasswordPage = () => {
   const [identifier, setIdentifier] = useState('');
   const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     setErrorMsg('');
-
+    setLoading(true);
     try {
       const res = await api.post('/auth/forgot-password', { identifier });
       setMessage(res.data.message);
     } catch (err) {
       setErrorMsg(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,6 +49,7 @@ const ForgotPasswordPage = () => {
               onChange={(e) => setIdentifier(e.target.value)}
               className="w-full px-3 py-2 rounded bg-gray-800 text-white placeholder-gray-400 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
+              disabled={loading}
             />
 
             {message && <p className="text-green-400 text-sm">{message}</p>}
@@ -53,9 +57,20 @@ const ForgotPasswordPage = () => {
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded transition-all duration-300"
+              className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded transition-all duration-300 flex items-center justify-center ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              disabled={loading}
             >
-              Send Reset Link
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                  Sending...
+                </span>
+              ) : (
+                'Send Reset Link'
+              )}
             </button>
           </form>
 
