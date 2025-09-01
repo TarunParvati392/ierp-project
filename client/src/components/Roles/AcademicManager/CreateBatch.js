@@ -59,12 +59,13 @@ const CreateBatchForm = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
-      toast.success("✅ Batch Created Successfully!");
+      toast.success("Batch Created Successfully!");
       setForm({ degree_id: "", specialization_id: "", batchName: "", prefix: "" });
       setSelectedDegree("");
     } catch (err) {
       console.error(err);
-      toast.error("❌ Error creating batch");
+      const errorMsg = err?.response?.data?.message || "Error creating batch";
+      toast.error(errorMsg);
     }
   };
 
