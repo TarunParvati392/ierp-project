@@ -1,5 +1,5 @@
 // controllers/faceLockController.js
-const User = require('../models/User');
+const User = require('../../models/User');
 
 // Example gestures list
 const gestureList = [

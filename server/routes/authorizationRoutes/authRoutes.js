@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { login, forgotPassword, resetPassword, verifyToken, saveFace, faceLogin } = require('../controllers/authController');
+
+const { login, forgotPassword, resetPassword, 
+    verifyToken, saveFace, faceLogin } = require('../../controllers/authorization/authController');
 
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);

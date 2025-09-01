@@ -19,11 +19,17 @@ app.get('/', (req, res) => {
   res.send('iERP Backend Running');
 });
 
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require('./routes/authorizationRoutes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-const userRoutes = require('./routes/userRoutes');
+const userRoutes = require('./routes/commonRoutes/userRoutes');
 app.use('/api/user', userRoutes);
+
+const degreeRoutes = require('./routes/commonRoutes/degreeRoutes');
+app.use('/api/degrees', degreeRoutes);
+
+const batchRoutes = require('./routes/academicManagerRoutes/batchRoutes');
+app.use('/api/batches', batchRoutes);
 
 //const faceLockRoutes = require('./routes/faceLockRoutes');
 //app.use('/api/facelock', faceLockRoutes);

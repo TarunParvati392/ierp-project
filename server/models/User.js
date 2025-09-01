@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  userId: { type: String, required: true, unique: true }, // with Prefix
+  userId: { type: String, required: true, unique: true }, // UID with prefix
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -19,9 +19,9 @@ const userSchema = new mongoose.Schema({
     default: 'dark',
   },
 
-  // 🔗 References
+  // 🔗 Reference to Batch & Section
   batch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', default: null },
-  section_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Section', default: null } // optional
+  section_id: { type: String, default: null } // section name (A, B, C…)
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

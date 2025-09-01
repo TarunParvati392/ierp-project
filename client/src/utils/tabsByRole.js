@@ -1,4 +1,4 @@
-import { FaUser, FaUsers, FaUserShield, FaClipboardList } from "react-icons/fa";
+import { FaUser, FaUserPlus, FaUsersSlash, FaUserCheck, FaUserTimes, FaLayerGroup } from "react-icons/fa";
 
 const commonTabs = [
   { name: "Profile", path: "/dashboard/profile", icon: <FaUser /> },
@@ -7,14 +7,13 @@ const commonTabs = [
 // Role-specific tabs
 const roleTabs = {
   Admin: [
-    { name: "Add User", path: "/dashboard/add-user", icon: <FaUserShield /> },
-    { name: "Manage Users", path: "/dashboard/manage-users", icon: <FaUsers /> },
+    { name: "Add User", path: "/dashboard/add-user", icon: <FaUserPlus /> },
+    { name: "Block Users", path: "/dashboard/block-users", icon: <FaUsersSlash /> },
+    { name: "Unblock Users", path: "/dashboard/unblock-users", icon: <FaUserCheck /> },
+    { name: "Delete Users", path: "/dashboard/delete-users", icon: <FaUserTimes /> }
   ],
-  Faculty: [
-    { name: "My Classes", path: "/dashboard/classes", icon: <FaClipboardList /> },
-  ],
-  Student: [
-    { name: "My Courses", path: "/dashboard/courses", icon: <FaClipboardList /> },
+  "Academic Manager": [
+    { name: "Manage Batch", path: "/dashboard/manage-batch", icon: <FaLayerGroup /> },
   ],
   // Add more roles here...
 };
