@@ -9,6 +9,7 @@ import Home from './pages/dashboard/Home';
 //import Profile from './pages/dashboard/Profile';
 import ProfileTab from './pages/dashboard/ProfileTab';
 import ManageBatchTab from './pages/dashboard/AcademicManager/ManageBatch';
+import ManageUsersTab from './pages/dashboard/Admin/ManageUsers';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -27,6 +28,7 @@ const App = () => {
           <Route index element={<Home />} />
           <Route path="profile" element={<ProfileTab />} />
           <Route path="manage-batch" element={<ManageBatchTab />} />
+          <Route path="manage-users" element={<ManageUsersTab />} />
         </Route>
       </Routes>
     </Router>

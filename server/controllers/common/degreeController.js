@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const Degree = mongoose.connection.collection("degrees");
 const Specialization = mongoose.connection.collection("specializations");
+const Batch = mongoose.connection.collection("batches");
 
 //Get All Degrees
 exports.degree = async (req, res) =>{
@@ -22,5 +23,26 @@ exports.specialization = async (req, res) =>{
     } catch (err){
         console.error(err);
         res.status(500).json({ message: "Error fetching specializations" });
+    }
+};
+
+exports.getBatches = async (req, res) => {
+    try {
+        const { degreeId, specializationId } = req.params;
+        const filter = {
+            degree_id: new mongoose.Types.ObjectId(degreeId),
+        };
+
+        // Only add specialization_id if it's not 'null' and not undefined
+        if (specializationId && specializationId !== "null") {
+            filter.specialization_id = new mongoose.Types.ObjectId(specializationId);
+        }
+
+        // Sort batches from latest to oldest by createdAt descending
+        const batches = await Batch.find(filter).sort({ createdAt: -1 }).toArray();
+        res.json(batches);
+    } catch (err) {
+        console.error("Error Fetching Batches:", err);
+        res.status(500).json({ message: "Error fetching batches" });
     }
 };

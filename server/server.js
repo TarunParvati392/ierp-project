@@ -31,6 +31,9 @@ app.use('/api/degrees', degreeRoutes);
 const batchRoutes = require('./routes/academicManagerRoutes/batchRoutes');
 app.use('/api/batches', batchRoutes);
 
+const adminRoutes = require('./routes/admin/adminRoutes');
+app.use('/api/admin', adminRoutes);
+
 //const faceLockRoutes = require('./routes/faceLockRoutes');
 //app.use('/api/facelock', faceLockRoutes);
 

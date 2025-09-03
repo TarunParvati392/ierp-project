@@ -84,7 +84,7 @@ const CreateBatchForm = () => {
               handleChange(e);
               setSelectedDegree(e.target.value);
             }}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-white text-black"
           >
             <option value="">-- Select Degree --</option>
             {degrees.map((d) => (
@@ -103,7 +103,7 @@ const CreateBatchForm = () => {
               name="specialization_id"
               value={form.specialization_id}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2"
+              className="w-full border rounded px-3 py-2 bg-white text-black"
             >
               <option value="">-- Select Specialization --</option>
               {specializations.map((s) => (
@@ -123,7 +123,7 @@ const CreateBatchForm = () => {
             name="batchName"
             value={form.batchName}
             onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-white text-black"
             placeholder="Eg: MCA 2023-2025"
           />
         </div>
@@ -136,7 +136,7 @@ const CreateBatchForm = () => {
             name="prefix"
             value={form.prefix}
             onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-white text-black"
             placeholder="Eg: MCA23"
           />
         </div>
