@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
   profileImage: { type: String, default: '/uploads/default.png' },
 
   isBlocked: { type: Boolean, default: false },
+  blockedReason: { type: String, default: null },
+  blockedAt: { type: Date, default: null },
+
 
   // Theme preference
   theme: {
