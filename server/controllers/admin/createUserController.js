@@ -109,7 +109,7 @@ exports.createUser = async (req, res) => {
         email,
         'Welcome to Aurora Deemed University | iERP Credentials',
         `Dear ${name},
-        Welcome to Aurora Deemed University!\n\nYour iERP account has been successfully created. Please find your login credentials below:\n\n--------------------------------------------------\nRole: ${role}\nUser ID: ${uid}\nTemporary Password: ${plainPassword}\n--------------------------------------------------\n\nLogin Portal: ${process.env.BASE_URL}\n\nFor your security, please change your password after your first login.\n\nIf you have any questions or need assistance, feel free to reply to this email.\n\nBest regards,\nAurora Deemed University IT Team\n`
+        Welcome to Aurora Deemed University!\n\nYour iERP account has been successfully created. Please find your login credentials below:\n\n-----------------------------------------------------\nRole: ${role}\nUser ID: ${uid}\nTemporary Password: ${plainPassword}\n-----------------------------------------------------\n\nLogin Portal: ${process.env.BASE_URL}\n\nFor your security, please change your password after your first login.\n\nIf you have any questions or need assistance, feel free to reply to this email.\n\nBest regards,\nAurora Deemed University IT Team\n`
       );
     } catch (mailErr) {
       // We don’t fail the whole request if email sending fails—just inform client

@@ -83,10 +83,11 @@ exports.blockUser = async (req, res) => {
     user.blockedAt = new Date();
     await user.save();
 
-    // 🔹 Send mail to user
+    // 🔹 Send mail to user (HTML)
     await sendEmail(
       user.email,
       "iERP: Account Blocked",
+      undefined, // no text
       `<p>Dear ${user.name},</p>
       <p>Your account (UID: ${user.userId}) has been <b>blocked</b> by Admin.</p>
       <p><b>Reason:</b> ${reason}</p>
