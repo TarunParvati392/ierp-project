@@ -18,6 +18,7 @@ const BlockUsers = () => {
   const [blockUserId, setBlockUserId] = useState(null);
   const [reason, setReason] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // 🔹 Fetch users
   const fetchUsers = async () => {
@@ -89,6 +90,7 @@ const BlockUsers = () => {
       toast.error("Reason is required");
       return;
     }
+    setLoading(true);
     try {
       await axios.post(
         `${process.env.REACT_APP_API_URL}/admin/block/${blockUserId}`,
@@ -103,11 +105,13 @@ const BlockUsers = () => {
     } catch (err) {
       console.error(err);
       toast.error(err?.response?.data?.message || "Error blocking user");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className={`${Styles.card} rounded-xl space-y-4`}>
+  <div className={`${Styles.card} rounded-xl space-y-4 transition-theme`}>
       <h3 className="text-xl font-semibold">Block Users</h3>
 
       {/* 🔍 Search + Sort + Filters */}
@@ -149,7 +153,7 @@ const BlockUsers = () => {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse border">
           <thead>
-            <tr className="bg-gray-200 dark:bg-gray-700">
+            <tr className={theme === 'dark' ? "bg-gray-800 text-white" : theme === 'light' ? "bg-gray-200 text-gray-800" : "bg-gradient-to-r from-purple-500 via-indigo-600 to-blue-500 text-white"}>
               <th className="border px-2 py-1">S.No</th>
               <th className="border px-2 py-1">UID</th>
               <th className="border px-2 py-1">Name</th>
@@ -178,9 +182,10 @@ const BlockUsers = () => {
                   <td className="border px-2 py-1">
                     <button
                       onClick={() => { setBlockUserId(u._id); setShowModal(true); }}
-                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                      className={`${Styles.button} bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded`}
+                      disabled={loading}
                     >
-                      Block
+                      {loading && blockUserId === u._id ? 'Blocking...' : 'Block'}
                     </button>
                   </td>
                 </tr>
@@ -192,19 +197,21 @@ const BlockUsers = () => {
 
       {/* Block Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-96">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className={theme === 'dark' ? "bg-gray-900 text-white p-6 rounded-xl w-96" : theme === 'light' ? "bg-white text-gray-900 p-6 rounded-xl w-96" : "bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-500 text-white p-6 rounded-xl w-96"}>
             <h4 className="text-lg font-semibold mb-3">Block User</h4>
             <textarea
               rows="3"
               placeholder="Enter reason for blocking"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full border rounded px-3 py-2"
+              className="w-full border rounded px-3 py-2 text-gray-900"
             />
             <div className="flex justify-end gap-2 mt-3">
-              <button onClick={() => { setShowModal(false); setReason(""); }} className="px-3 py-1 border rounded">Cancel</button>
-              <button onClick={handleBlock} className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Confirm Block</button>
+              <button onClick={() => { setShowModal(false); setReason(""); }} className={`${Styles.button} border rounded`}>Cancel</button>
+              <button onClick={handleBlock} className={`${Styles.button} bg-red-600 hover:bg-red-700 text-white`} disabled={loading}>
+                {loading ? 'Blocking...' : 'Confirm Block'}
+              </button>
             </div>
           </div>
         </div>
