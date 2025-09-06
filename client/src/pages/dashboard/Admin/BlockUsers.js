@@ -237,51 +237,57 @@ const BlockUsers = () => {
           </select>
         </div>
         {filterType === 'role' && (
-          <div className="flex flex-wrap gap-2">
-            {roleOptions.map(role => (
-              <label key={role} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={selectedRoles.includes(role)}
-                  onChange={e => {
-                    setSelectedRoles(prev => e.target.checked ? [...prev, role] : prev.filter(r => r !== role));
-                  }}
-                />
-                {role}
-              </label>
-            ))}
+          <div className="flex gap-2 items-center">
+            <label htmlFor="roleDropdown">Role:</label>
+            <select
+              id="roleDropdown"
+              className="border rounded px-2 py-1"
+              value={selectedRoles[0] || ''}
+              onChange={e => {
+                setSelectedRoles(e.target.value ? [e.target.value] : []);
+              }}
+            >
+              <option value="">Select Role</option>
+              {roleOptions.map(role => (
+                <option key={role} value={role}>{role}</option>
+              ))}
+            </select>
           </div>
         )}
         {filterType === 'degree' && (
-          <div className="flex flex-wrap gap-2">
-            {degreeOptions.map(degree => (
-              <label key={degree._id} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={selectedDegrees.includes(degree.degree_name)}
-                  onChange={e => {
-                    setSelectedDegrees(prev => e.target.checked ? [...prev, degree.degree_name] : prev.filter(d => d !== degree.degree_name));
-                  }}
-                />
-                {degree.degree_name}
-              </label>
-            ))}
+          <div className="flex gap-2 items-center">
+            <label htmlFor="degreeDropdown">Degree:</label>
+            <select
+              id="degreeDropdown"
+              className="border rounded px-2 py-1"
+              value={selectedDegrees[0] || ''}
+              onChange={e => {
+                setSelectedDegrees(e.target.value ? [e.target.value] : []);
+              }}
+            >
+              <option value="">Select Degree</option>
+              {degreeOptions.map(degree => (
+                <option key={degree._id} value={degree.degree_name}>{degree.degree_name}</option>
+              ))}
+            </select>
           </div>
         )}
         {filterType === 'batch' && (
-          <div className="flex flex-wrap gap-2">
-            {allBatches.map(batch => (
-              <label key={batch._id} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={selectedBatchIds.includes(batch.batchName)}
-                  onChange={e => {
-                    setSelectedBatchIds(prev => e.target.checked ? [...prev, batch.batchName] : prev.filter(b => b !== batch.batchName));
-                  }}
-                />
-                {batch.batchName}
-              </label>
-            ))}
+          <div className="flex gap-2 items-center">
+            <label htmlFor="batchDropdown">Batch:</label>
+            <select
+              id="batchDropdown"
+              className="border rounded px-2 py-1"
+              value={selectedBatchIds[0] || ''}
+              onChange={e => {
+                setSelectedBatchIds(e.target.value ? [e.target.value] : []);
+              }}
+            >
+              <option value="">Select Batch</option>
+              {allBatches.map(batch => (
+                <option key={batch._id} value={batch.batchName}>{batch.batchName}</option>
+              ))}
+            </select>
           </div>
         )}
       </div>
