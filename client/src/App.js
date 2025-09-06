@@ -11,6 +11,7 @@ import ProfileTab from './pages/dashboard/ProfileTab';
 import ManageBatchTab from './pages/dashboard/AcademicManager/ManageBatch';
 import ManageUsersTab from './pages/dashboard/Admin/ManageUsers';
 import BlockUsers from './pages/dashboard/Admin/BlockUsers';
+import UnBlock from './pages/dashboard/Admin/UnBlock';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -31,6 +32,7 @@ const App = () => {
           <Route path="manage-batch" element={<ManageBatchTab />} />
           <Route path="create-users" element={<ManageUsersTab />} />
           <Route path="block-users" element={<BlockUsers />} />
+          <Route path="unblock-users" element={<UnBlock />} />
         </Route>
       </Routes>
     </Router>

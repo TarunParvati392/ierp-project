@@ -6,7 +6,7 @@ import { getThemeStyles } from "../../../utils/themeStyles";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const BlockUsers = () => {
+const UnBlock = () => {
   const { theme } = useContext(ThemeContext);
   const Styles = getThemeStyles(theme);
 
@@ -39,15 +39,14 @@ const BlockUsers = () => {
   const [selectedBatches, setSelectedBatches] = useState([]);
   const [sortOption, setSortOption] = useState("latest");
 
-  const [blockUserId, setBlockUserId] = useState(null);
-  const [reason, setReason] = useState("");
+  const [unblockUserId, setUnblockUserId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // 🔹 Fetch users
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/admin/unblocked`, {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/admin/blocked`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setUsers(res.data);
@@ -164,27 +163,22 @@ const BlockUsers = () => {
     setFilteredUsers(result);
   }, [search, filterType, selectedRoles, selectedDegrees, selectedSpecs, selectedBatches, sortOption, users]);
 
-  // 🔹 Handle Block User
-  const handleBlock = async () => {
-    if (!reason.trim()) {
-      toast.error("Reason is required");
-      return;
-    }
+  // 🔹 Handle Unblock User
+  const handleUnblock = async () => {
     setLoading(true);
     try {
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/admin/block/${blockUserId}`,
-        { reason },
+      await axios.put(
+        `${process.env.REACT_APP_API_URL}/admin/unblock/${unblockUserId}`,
+        {},
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
-      toast.success("User blocked successfully");
+      toast.success("User unblocked successfully");
       setShowModal(false);
-      setReason("");
-      setBlockUserId(null);
+      setUnblockUserId(null);
       fetchUsers();
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Error blocking user");
+      toast.error(err?.response?.data?.message || "Error unblocking user");
     } finally {
       setLoading(false);
     }
@@ -279,6 +273,7 @@ const BlockUsers = () => {
               <th className="border px-2 py-1">Degree</th>
               <th className="border px-2 py-1">Specialization</th>
               <th className="border px-2 py-1">Batch</th>
+              <th className="border px-2 py1">Reason</th>
               <th className="border px-2 py-1">Action</th>
             </tr>
           </thead>
@@ -297,13 +292,14 @@ const BlockUsers = () => {
                   <td className="border px-2 py-1">{u.degree || "-"}</td>
                   <td className="border px-2 py-1">{u.specialization || "-"}</td>
                   <td className="border px-2 py-1">{u.batch || "-"}</td>
+                  <td className="border px-2 py-1">{u.reason}</td>
                   <td className="border px-2 py-1">
                     <button
-                      onClick={() => { setBlockUserId(u._id); setShowModal(true); }}
-                      className={`bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded`}
+                      onClick={() => { setUnblockUserId(u._id); setShowModal(true); }}
+                      className={`bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded`}
                       disabled={loading}
                     >
-                      {loading && blockUserId === u._id ? 'Blocking...' : 'Block'}
+                      {loading && unblockUserId === u._id ? 'Unblocking...' : 'Unblock'}
                     </button>
                   </td>
                 </tr>
@@ -313,22 +309,16 @@ const BlockUsers = () => {
         </table>
       </div>
 
-      {/* Block Modal */}
+      {/* Unblock Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className={theme === 'dark' ? "bg-gray-900 text-white p-6 rounded-xl w-96" : theme === 'light' ? "bg-white text-gray-900 p-6 rounded-xl w-96" : "bg-gradient-to-br from-purple-500 via-indigo-600 to-blue-500 text-white p-6 rounded-xl w-96"}>
-            <h4 className="text-lg font-semibold mb-3">Block User</h4>
-            <textarea
-              rows="3"
-              placeholder="Enter reason for blocking"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-gray-900"
-            />
+            <h4 className="text-lg font-semibold mb-3">Unblock User</h4>
+            <p>Are you sure you want to unblock this user?</p>
             <div className="flex justify-end gap-2 mt-3">
-              <button onClick={() => { setShowModal(false); setReason(""); }} className={`${Styles.button} border rounded`}>Cancel</button>
-              <button onClick={handleBlock} className={`bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded`} disabled={loading}>
-                {loading ? 'Blocking...' : 'Confirm Block'}
+              <button onClick={() => { setShowModal(false); }} className={`${Styles.button} border rounded`}>Cancel</button>
+              <button onClick={handleUnblock} className={`bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded`} disabled={loading}>
+                {loading ? 'Unblocking...' : 'Confirm Unblock'}
               </button>
             </div>
           </div>
@@ -340,4 +330,4 @@ const BlockUsers = () => {
   );
 };
 
-export default BlockUsers;
+export default UnBlock;
