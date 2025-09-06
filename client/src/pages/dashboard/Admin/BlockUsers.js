@@ -121,10 +121,10 @@ const BlockUsers = () => {
           placeholder="Search by UID, Name, Role, Degree..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border rounded px-3 py-2 w-full md:w-1/3"
+          className="border rounded px-3 py-2 w-full md:w-1/3 bg-white text-black"
         />
 
-        <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="border rounded px-3 py-2">
+        <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="border rounded px-3 py-2 bg-white text-black">
           <option value="latest">Sort: Latest → Old</option>
           <option value="role-asc">Role: A → Z</option>
           <option value="role-desc">Role: Z → A</option>

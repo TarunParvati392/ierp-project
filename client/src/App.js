@@ -29,7 +29,7 @@ const App = () => {
           <Route index element={<Home />} />
           <Route path="profile" element={<ProfileTab />} />
           <Route path="manage-batch" element={<ManageBatchTab />} />
-          <Route path="manage-users" element={<ManageUsersTab />} />
+          <Route path="create-users" element={<ManageUsersTab />} />
           <Route path="block-users" element={<BlockUsers />} />
         </Route>
       </Routes>

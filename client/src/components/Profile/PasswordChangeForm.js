@@ -1,8 +1,11 @@
 // components/Profile/PasswordChangeForm.jsx
+
 import React, { useState } from 'react';
 import { ThemeContext } from '../../context/ThemeContext';
 import { getThemeStyles } from '../../utils/themeStyles';
 import api from '../../utils/api';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 const PasswordChangeForm = () => {
@@ -26,27 +29,27 @@ const PasswordChangeForm = () => {
 
   const handleChangePassword = async () => {
     setLoading(true);
-    try{
+    try {
       const token = localStorage.getItem('token');
       const res = await api.put('/user/update-password', {
         currentPassword: current,
         newPassword: newPass,
       }, {
-        headers: { Authorization: `Bearer ${token}`},
+        headers: { Authorization: `Bearer ${token}` },
       });
-      alert(res.data.message);
+      toast.success(res.data.message || 'Password updated successfully');
       setCurrent('');
       setNewPass('');
       setConfirm('');
     } catch (err) {
-      alert(err.response.data.error);
+      toast.error(err?.response?.data?.error || 'Failed to update password');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
   return (
-    <div className={`${Styles.card} space-y-4 rounded-xl`}>
+  <div className={`${Styles.card} space-y-4 rounded-xl`}>
       <h3 className="text-xl font-semibold">Change Password</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <input
@@ -55,6 +58,8 @@ const PasswordChangeForm = () => {
           value={current}
           onChange={(e) => setCurrent(e.target.value)}
           className="w-full px-3 py-2 rounded border bg-white text-black"
+          onCopy={e => { e.preventDefault(); toast.info('Copying password is not allowed.'); }}
+          onPaste={e => { e.preventDefault(); toast.info('Pasting password is not allowed.'); }}
         />
         <input
           type="password"
@@ -62,6 +67,8 @@ const PasswordChangeForm = () => {
           value={newPass}
           onChange={(e) => setNewPass(e.target.value)}
           className="w-full px-3 py-2 rounded border bg-white text-black"
+          onCopy={e => { e.preventDefault(); toast.info('Copying password is not allowed.'); }}
+          onPaste={e => { e.preventDefault(); toast.info('Pasting password is not allowed.'); }}
         />
         <input
           type="password"
@@ -69,6 +76,8 @@ const PasswordChangeForm = () => {
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           className="w-full px-3 py-2 rounded border bg-white text-black"
+          onCopy={e => { e.preventDefault(); toast.info('Copying password is not allowed.'); }}
+          onPaste={e => { e.preventDefault(); toast.info('Pasting password is not allowed.'); }}
         />
       </div>
       <ul className="text-sm space-y-1 mt-2">
@@ -93,8 +102,9 @@ const PasswordChangeForm = () => {
         className={`${Styles.button} mt-4`}
         disabled={!allValid || loading}
       >
-        {loading ? 'Updating...' : 'Update Password' }
+        {loading ? 'Updating...' : 'Update Password'}
       </button>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </div>
   );
 };

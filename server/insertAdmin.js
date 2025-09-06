@@ -5,14 +5,14 @@ require('dotenv').config();
 const User = require('./models/User');
 
 mongoose.connect(process.env.MONGODB_URI).then(async () => {
-  const hashedPassword = await bcrypt.hash("Academic@123", 10);
+  const hashedPassword = await bcrypt.hash("Tarun@123", 10);
 
   const admin = new User({
-    userId: "ACDM001",
-    name: "Academic User",
-    email: "academic@ierp.com",
+    userId: "ADM001",
+    name: "Admin",
+    email: "admin@ierp.com",
     password: hashedPassword,
-    role: "Academic Manager",
+    role: "Admin",
     isBlocked: false,
   });
 

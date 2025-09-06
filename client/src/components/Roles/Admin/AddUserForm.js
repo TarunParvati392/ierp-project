@@ -95,12 +95,15 @@ const AddUserForm = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const [loading, setLoading] = useState(false);
+
   const handleAddUser = async () => {
     if (!form.role || !form.name || !form.email) {
       toast.error("Please fill all required fields");
       return;
     }
 
+    setLoading(true);
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/admin/create-user`, form, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -121,6 +124,8 @@ const AddUserForm = () => {
       console.error("Error creating user:", err);
       const errorMsg = err?.response?.data?.message || "Error creating user";
       toast.error(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -136,7 +141,7 @@ const AddUserForm = () => {
             name="role"
             value={form.role}
             onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-900"
           >
             <option value="">-- Select Role --</option>
             {roles.map((r, idx) => (
@@ -155,7 +160,7 @@ const AddUserForm = () => {
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-900"
             placeholder="Enter full name"
           />
         </div>
@@ -168,7 +173,7 @@ const AddUserForm = () => {
             name="email"
             value={form.email}
             onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-900"
             placeholder="Enter email"
           />
         </div>
@@ -188,7 +193,7 @@ const AddUserForm = () => {
                   setForm({ ...form, degree_id: e.target.value, specialization_id: "", batch_id: "" });
                   setSelectedSpecialization("");
                 }}
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-900"
               >
                 <option value="">-- Select Degree --</option>
                 {degrees.map((d) => (
@@ -211,7 +216,7 @@ const AddUserForm = () => {
                     setSelectedSpecialization(e.target.value);
                     setForm({ ...form, specialization_id: e.target.value, batch_id: "" });
                   }}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-900"
                 >
                   <option value="">-- Select Specialization --</option>
                   {specializations.map((s) => (
@@ -230,7 +235,7 @@ const AddUserForm = () => {
                 name="batch_id"
                 value={form.batch_id}
                 onChange={handleChange}
-                className="w-full border rounded px-3 py-2"
+                className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-900"
               >
                 <option value="">-- Select Batch --</option>
                 {batches.map((b) => (
@@ -244,8 +249,8 @@ const AddUserForm = () => {
         )}
       </div>
 
-      <button onClick={handleAddUser} className={`${Styles.button} mt-4`}>
-        Add User
+      <button onClick={handleAddUser} className={`${Styles.button} mt-4`} disabled={loading}>
+        {loading ? 'Adding User...' : 'Add User'}
       </button>
 
       <ToastContainer position="top-right" autoClose={3000} />

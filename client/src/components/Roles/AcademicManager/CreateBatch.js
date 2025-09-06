@@ -48,12 +48,15 @@ const CreateBatchForm = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const [loading, setLoading] = useState(false);
+
   const handleCreateBatch = async () => {
     if (!form.degree_id || !form.batchName || !form.prefix) {
       toast.error("Please fill all required fields");
       return;
     }
 
+    setLoading(true);
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/batches`, form, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -64,8 +67,11 @@ const CreateBatchForm = () => {
       setSelectedDegree("");
     } catch (err) {
       console.error(err);
-      const errorMsg = err?.response?.data?.message || "Error creating batch";
+      const data = err?.response?.data;
+      const errorMsg = data?.message || data?.error || "Error creating batch";
       toast.error(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -145,8 +151,9 @@ const CreateBatchForm = () => {
       <button
         onClick={handleCreateBatch}
         className={`${Styles.button} mt-4`}
+        disabled={loading}
       >
-        Create Batch
+        {loading ? 'Creating Batch...' : 'Create Batch'}
       </button>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
     </div>

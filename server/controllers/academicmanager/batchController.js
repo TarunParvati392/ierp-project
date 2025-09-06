@@ -30,9 +30,15 @@ exports.createBatch = async (req, res) => {
     const degree = await Degree.findOne({ _id: new mongoose.Types.ObjectId(degree_id) });
     if (!degree) return res.status(404).json({ error: "Degree not found" });
 
-    // 🔹 Find Department Linked with Degree
-    const department = await Department.findOne({ degree_id: new mongoose.Types.ObjectId(degree_id) });
-    if (!department) return res.status(404).json({ error: "Department not found for this degree" });
+    // 🔹 Find Department Linked with Specialization or Degree
+    let department = null;
+    if (specialization_id) {
+      department = await Department.findOne({ specialization_id: new mongoose.Types.ObjectId(specialization_id) });
+    }
+    if (!department) {
+      department = await Department.findOne({ degree_id: new mongoose.Types.ObjectId(degree_id) });
+    }
+    if (!department) return res.status(404).json({ error: "Department not found for this degree/specialization" });
 
     // 🔹 Find School Linked with Degree
     const school = await School.findOne({ _id: degree.school_id });
