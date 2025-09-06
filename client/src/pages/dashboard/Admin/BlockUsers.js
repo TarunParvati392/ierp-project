@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { ThemeContext } from "../../../context/ThemeContext";
@@ -12,7 +13,28 @@ const BlockUsers = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState({ role: false, degree: false, specialization: false, batch: false });
+  // Filter UI state
+  const [filterType, setFilterType] = useState('role'); // 'role' or 'degree'
+  const [roleOptions] = useState([
+    "Admin",
+    "Academic Manager",
+    "Faculty",
+    "Dean",
+    "Hod",
+    "Asset Manager",
+    "Grievance Manager",
+    "Schedule Manager",
+    "Student",
+  ]);
+  const [degreeOptions, setDegreeOptions] = useState([]);
+  const [specializationOptions, setSpecializationOptions] = useState({}); // { degreeId: [specs] }
+  const [batchOptions, setBatchOptions] = useState({}); // { degreeId or specId: [batches] }
+
+  // Selected filters
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [selectedDegrees, setSelectedDegrees] = useState([]);
+  const [selectedSpecs, setSelectedSpecs] = useState([]);
+  const [selectedBatches, setSelectedBatches] = useState([]);
   const [sortOption, setSortOption] = useState("latest");
 
   const [blockUserId, setBlockUserId] = useState(null);
@@ -34,9 +56,57 @@ const BlockUsers = () => {
     }
   };
 
+  // Fetch users
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Fetch degrees for filter
+  useEffect(() => {
+    if (filterType === 'degree') {
+      axios.get(`${process.env.REACT_APP_API_URL}/degrees`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      })
+        .then(res => setDegreeOptions(res.data))
+        .catch(() => setDegreeOptions([]));
+    }
+  }, [filterType]);
+
+  // Fetch specializations and batches for selected degrees
+  useEffect(() => {
+    if (filterType === 'degree') {
+      selectedDegrees.forEach(degreeId => {
+        // Fetch specializations
+        if (!specializationOptions[degreeId]) {
+          axios.get(`${process.env.REACT_APP_API_URL}/degrees/specializations/${degreeId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          })
+            .then(res => {
+              setSpecializationOptions(prev => ({ ...prev, [degreeId]: res.data }));
+              // If no specializations, fetch batches for degree
+              if (!res.data || res.data.length === 0) {
+                axios.get(`${process.env.REACT_APP_API_URL}/degrees/batches/${degreeId}/null`, {
+                  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                })
+                  .then(batchRes => setBatchOptions(prev => ({ ...prev, [degreeId]: batchRes.data })))
+                  .catch(() => {});
+              }
+            })
+            .catch(() => setSpecializationOptions(prev => ({ ...prev, [degreeId]: [] })));
+        }
+        // Fetch batches for selected specializations
+        (specializationOptions[degreeId] || []).forEach(spec => {
+          if (selectedSpecs.includes(spec._id) && !batchOptions[spec._id]) {
+            axios.get(`${process.env.REACT_APP_API_URL}/degrees/batches/${degreeId}/${spec._id}`, {
+              headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            })
+              .then(batchRes => setBatchOptions(prev => ({ ...prev, [spec._id]: batchRes.data })))
+              .catch(() => {});
+          }
+        });
+      });
+    }
+  }, [filterType, selectedDegrees, selectedSpecs, specializationOptions]);
 
   // 🔹 Handle Search + Filters + Sort
   useEffect(() => {
@@ -56,12 +126,25 @@ const BlockUsers = () => {
       );
     }
 
-    // Filters (checkboxes)
-    Object.keys(filters).forEach((key) => {
-      if (filters[key]) {
-        result = result.filter((u) => u[key]);
-      }
-    });
+    // Advanced Filters
+    if (filterType === 'role' && selectedRoles.length > 0) {
+      result = result.filter(u => selectedRoles.includes(u.role));
+    }
+    if (filterType === 'degree' && selectedDegrees.length > 0) {
+      result = result.filter(u => {
+        // Degree
+        if (!selectedDegrees.includes(u.degree)) return false;
+        // Specialization
+        if (selectedSpecs.length > 0 && u.specialization) {
+          if (!selectedSpecs.includes(u.specialization)) return false;
+        }
+        // Batch
+        if (selectedBatches.length > 0 && u.batch) {
+          if (!selectedBatches.includes(u.batch)) return false;
+        }
+        return true;
+      });
+    }
 
     // Sort
     switch (sortOption) {
@@ -82,7 +165,7 @@ const BlockUsers = () => {
     }
 
     setFilteredUsers(result);
-  }, [search, filters, sortOption, users]);
+  }, [search, filterType, selectedRoles, selectedDegrees, selectedSpecs, selectedBatches, sortOption, users]);
 
   // 🔹 Handle Block User
   const handleBlock = async () => {
@@ -133,20 +216,123 @@ const BlockUsers = () => {
         </select>
       </div>
 
-      {/* Filters (Checkboxes) */}
-      <div className="flex flex-wrap gap-4 items-center">
-        <label className="flex items-center gap-1">
-          <input type="checkbox" checked={filters.role} onChange={e => setFilters({ ...filters, role: e.target.checked })} /> Role
-        </label>
-        <label className="flex items-center gap-1">
-          <input type="checkbox" checked={filters.degree} onChange={e => setFilters({ ...filters, degree: e.target.checked })} /> Degree
-        </label>
-        <label className="flex items-center gap-1">
-          <input type="checkbox" checked={filters.specialization} onChange={e => setFilters({ ...filters, specialization: e.target.checked })} /> Specialization
-        </label>
-        <label className="flex items-center gap-1">
-          <input type="checkbox" checked={filters.batch} onChange={e => setFilters({ ...filters, batch: e.target.checked })} /> Batch
-        </label>
+      {/* Advanced Filters UI */}
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-4 items-center">
+          <label>Filter By:</label>
+          <select value={filterType} onChange={e => {
+            setFilterType(e.target.value);
+            setSelectedRoles([]);
+            setSelectedDegrees([]);
+            setSelectedSpecs([]);
+            setSelectedBatches([]);
+          }} className="border rounded px-2 py-1">
+            <option value="role">Role</option>
+            <option value="degree">Degree</option>
+          </select>
+        </div>
+        {filterType === 'role' && (
+          <div className="flex flex-wrap gap-2">
+            {roleOptions.map(role => (
+              <label key={role} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={selectedRoles.includes(role)}
+                  onChange={e => {
+                    setSelectedRoles(prev => e.target.checked ? [...prev, role] : prev.filter(r => r !== role));
+                  }}
+                />
+                {role}
+              </label>
+            ))}
+          </div>
+        )}
+        {filterType === 'degree' && (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              {degreeOptions.map(degree => (
+                <label key={degree._id} className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedDegrees.includes(degree.degree_name)}
+                    onChange={e => {
+                      setSelectedDegrees(prev => e.target.checked ? [...prev, degree.degree_name] : prev.filter(d => d !== degree.degree_name));
+                    }}
+                  />
+                  {degree.degree_name}
+                </label>
+              ))}
+            </div>
+            {/* Specializations and Batches for selected degrees */}
+            {selectedDegrees.map(degreeName => {
+              const degreeObj = degreeOptions.find(d => d.degree_name === degreeName);
+              if (!degreeObj) return null;
+              const specs = specializationOptions[degreeObj._id] || [];
+              // If no specializations, show batches for degree
+              if (specs.length === 0 && batchOptions[degreeObj._id]) {
+                return (
+                  <div key={degreeObj._id} className="ml-4">
+                    <div className="font-medium">Batches ({degreeObj.degree_name}):</div>
+                    <div className="flex flex-wrap gap-2">
+                      {batchOptions[degreeObj._id]?.map(batch => (
+                        <label key={batch._id} className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            checked={selectedBatches.includes(batch.batchName)}
+                            onChange={e => {
+                              setSelectedBatches(prev => e.target.checked ? [...prev, batch.batchName] : prev.filter(b => b !== batch.batchName));
+                            }}
+                          />
+                          {batch.batchName}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              // If specializations exist
+              return (
+                <div key={degreeObj._id} className="ml-4">
+                  <div className="font-medium">Specializations ({degreeObj.degree_name}):</div>
+                  <div className="flex flex-wrap gap-2">
+                    {specs.map(spec => (
+                      <label key={spec._id} className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedSpecs.includes(spec.specialization_name)}
+                          onChange={e => {
+                            setSelectedSpecs(prev => e.target.checked ? [...prev, spec.specialization_name] : prev.filter(s => s !== spec.specialization_name));
+                          }}
+                        />
+                        {spec.specialization_name}
+                      </label>
+                    ))}
+                  </div>
+                  {/* Batches for selected specializations */}
+                  {specs.filter(spec => selectedSpecs.includes(spec.specialization_name)).map(spec => (
+                    <div key={spec._id} className="ml-4">
+                      <div className="font-medium">Batches ({spec.specialization_name}):</div>
+                      <div className="flex flex-wrap gap-2">
+                        {batchOptions[spec._id]?.map(batch => (
+                          <label key={batch._id} className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedBatches.includes(batch.batchName)}
+                              onChange={e => {
+                                setSelectedBatches(prev => e.target.checked ? [...prev, batch.batchName] : prev.filter(b => b !== batch.batchName));
+                              }}
+                            />
+                            {batch.batchName}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Users Table */}
