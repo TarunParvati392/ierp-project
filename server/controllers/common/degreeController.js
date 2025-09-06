@@ -46,3 +46,14 @@ exports.getBatches = async (req, res) => {
         res.status(500).json({ message: "Error fetching batches" });
     }
 };
+
+// Get All Batches (for filtering)
+exports.getAllBatches = async (req, res) => {
+    try {
+        const batches = await Batch.find({}).sort({ createdAt: -1 }).toArray();
+        res.json(batches);
+    } catch (err) {
+        console.error("Error fetching all batches:", err);
+        res.status(500).json({ message: "Error fetching all batches" });
+    }
+};
