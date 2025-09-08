@@ -15,8 +15,7 @@ const UnBlock = () => {
   const [search, setSearch] = useState("");
   // Filter UI state
   const [filterType, setFilterType] = useState('role'); // 'role', 'degree', or 'batch'
-  const [allBatches, setAllBatches] = useState([]);
-  const [selectedBatchIds, setSelectedBatchIds] = useState([]);
+  // Removed unused: allBatches, selectedBatchIds
   const [roleOptions] = useState([
     "Admin",
     "Academic Manager",
@@ -75,8 +74,7 @@ const UnBlock = () => {
       axios.get(`${process.env.REACT_APP_API_URL}/degrees/all-batches`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
-        .then(res => setAllBatches(res.data))
-        .catch(() => setAllBatches([]));
+  // Removed unused setAllBatches
     }
   }, [filterType]);
 
@@ -217,7 +215,7 @@ const UnBlock = () => {
             setSelectedDegrees([]);
             setSelectedSpecs([]);
             setSelectedBatches([]);
-            setSelectedBatchIds([]);
+            // Removed unused setSelectedBatchIds
           }} className="border rounded px-2 py-1">
             <option value="role">Role</option>
             <option value="degree">Degree</option>

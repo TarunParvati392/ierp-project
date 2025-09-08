@@ -76,7 +76,7 @@ const AddUserForm = () => {
     if (selectedDegree && selectedSpecialization) {
       fetchBatches(selectedDegree, selectedSpecialization);
     }
-  }, [selectedSpecialization]);
+  }, [selectedDegree, selectedSpecialization]);
 
   // 🔹 Fetch Batches function
   const fetchBatches = async (degreeId, specializationId) => {

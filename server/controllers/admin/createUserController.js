@@ -92,6 +92,8 @@ exports.createUser = async (req, res) => {
       isBlocked: false,
       theme: 'dark',
       batch_id: role === 'Student' ? batch_id : null,
+      degree_id: role === 'Student' ? degree_id : null,
+      specialization_id: role === 'Student' ? (specialization_id || null) : null,
       section_id: null, // will be assigned when sections are created
     });
 
