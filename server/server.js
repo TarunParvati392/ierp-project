@@ -3,6 +3,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
+// Register reference models for population
+require('./models/School');
+require('./models/Department');
+require('./models/Degree');
+require('./models/Specialization');
+require('./models/Batch');
 
 const app = express();
 app.use(cors());

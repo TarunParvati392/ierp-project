@@ -14,6 +14,7 @@ const roleTabs = {
   ],
   "Academic Manager": [
     { name: "Manage Batch", path: "/dashboard/manage-batch", icon: <FaLayerGroup /> },
+    { name: "Manage Staff", path: "/dashboard/manage-staff", icon: <FaUsers /> }
   ],
   // Add more roles here...
 };

@@ -63,6 +63,67 @@ const handleImageUpdate = async (formData) => {
   }
 };
 
+  // Helper: get nested name or fallback
+  const getName = (obj, fallback = '-') => {
+    if (!obj) return fallback;
+    if (typeof obj === 'string') return obj;
+    if (obj.name) return obj.name;
+    if (obj.degree_name) return obj.degree_name;
+    if (obj.specialization_name) return obj.specialization_name;
+    if (obj.batch_name) return obj.batch_name;
+    return fallback;
+  };
+
+  // Render extra fields based on role
+  const renderRoleFields = () => {
+    switch ((user.role || '').toLowerCase()) {
+      case 'dean':
+        return (
+          <div>
+            <label className="block mb-1 text-sm font-medium">School</label>
+            <input type="text" value={getName(user.school) || '-'} disabled className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500" />
+          </div>
+        );
+      case 'hod':
+      case 'faculty':
+        return <>
+          <div>
+            <label className="block mb-1 text-sm font-medium">School</label>
+            <input type="text" value={getName(user.school) || '-'} disabled className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500" />
+          </div>
+          <div>
+            <label className="block mb-1 text-sm font-medium">Department</label>
+            <input type="text" value={getName(user.department) || '-'} disabled className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500" />
+          </div>
+        </>;
+      case 'student':
+        return <>
+          <div>
+            <label className="block mb-1 text-sm font-medium">Degree</label>
+            <input type="text" value={getName(user.degree) || '-'} disabled className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500" />
+          </div>
+          {user.specialization && (
+            <div>
+              <label className="block mb-1 text-sm font-medium">Specialization</label>
+              <input type="text" value={getName(user.specialization)} disabled className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500" />
+            </div>
+          )}
+          <div>
+            <label className="block mb-1 text-sm font-medium">Batch</label>
+            <input type="text" value={getName(user.batch)} disabled className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500" />
+          </div>
+          {user.section && (
+            <div>
+              <label className="block mb-1 text-sm font-medium">Section</label>
+              <input type="text" value={getName(user.section)} disabled className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500" />
+            </div>
+          )}
+        </>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className={`${Styles.card} space-y-4 rounded-xl`}>
       <h3 className="text-xl font-semibold">Profile Info</h3>
@@ -103,6 +164,8 @@ const handleImageUpdate = async (formData) => {
             className="w-full px-3 py-2 rounded border bg-gray-200 text-gray-500"
           />
         </div>
+        {/* Role-specific fields */}
+        {renderRoleFields()}
         <div>
           <label className="block mb-1 text-sm font-medium">Profile Image</label>
           <input
@@ -115,21 +178,20 @@ const handleImageUpdate = async (formData) => {
         </div>
       </div>
       <button
-  onClick={() => {
-    if (!profileImage) {
-      alert("Please select an image first");
-      return;
-    }
-    const formData = new FormData();
-    formData.append("profileImage", profileImage);
-    handleImageUpdate(formData);
-  }}
-  className={`${Styles.button} mt-4`}
-  disabled={loading}
->
-  {loading ? "Updating..." : "Update Profile"}
-</button>
-
+        onClick={() => {
+          if (!profileImage) {
+            alert("Please select an image first");
+            return;
+          }
+          const formData = new FormData();
+          formData.append("profileImage", profileImage);
+          handleImageUpdate(formData);
+        }}
+        className={`${Styles.button} mt-4`}
+        disabled={loading}
+      >
+        {loading ? "Updating..." : "Update Profile"}
+      </button>
     </div>
   );
 };

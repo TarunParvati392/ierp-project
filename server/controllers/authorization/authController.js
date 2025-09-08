@@ -9,10 +9,15 @@ exports.login = async (req, res) => {
   const { identifier, password } = req.body;
 
   try {
-    // Find by userId or email
+    // Find by userId or email, and populate references
     const user = await User.findOne({
       $or: [{ userId: identifier }, { email: identifier }]
-    });
+    })
+      .populate('school_id', 'name')
+      .populate('department_id', 'name')
+      .populate('degree_id', 'degree_name')
+      .populate('specialization_id', 'specialization_name')
+      .populate('batch_id', 'batchName');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -34,18 +39,33 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // Success: Send token & role
+    // Prepare user object for frontend
+    let userObj = {
+      role: user.role,
+      name: user.name,
+      userId: user.userId,
+      theme: user.theme,
+      email: user.email,
+      profileImage: user.profileImage
+    };
+
+    // Attach extra fields for profile info
+    if (user.role.toLowerCase() === 'dean') {
+      userObj.school = user.school_id ? { name: user.school_id.name } : null;
+    } else if (user.role.toLowerCase() === 'hod' || user.role.toLowerCase() === 'faculty') {
+      userObj.school = user.school_id ? { name: user.school_id.name } : null;
+      userObj.department = user.department_id ? { name: user.department_id.name } : null;
+    } else if (user.role.toLowerCase() === 'student') {
+      userObj.degree = user.degree_id ? { degree_name: user.degree_id.degree_name } : null;
+      if (user.specialization_id) userObj.specialization = { specialization_name: user.specialization_id.specialization_name };
+      userObj.batch = user.batch_id ? { batch_name: user.batch_id.batchName } : null;
+      if (user.section_id) userObj.section = user.section_id;
+    }
+
     return res.status(200).json({
       message: `${user.role} Login Successful`,
       token,
-      user: {
-        role: user.role,
-        name: user.name,
-        userId: user.userId,
-        theme: user.theme,
-        email: user.email,
-        profileImage: user.profileImage
-      }
+      user: userObj
     });
 
   } catch (err) {
