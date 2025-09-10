@@ -3,7 +3,7 @@ import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { ThemeContext } from "../../../context/ThemeContext";
 import { getThemeStyles } from "../../../utils/themeStyles";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const UnBlock = () => {
@@ -21,7 +21,7 @@ const UnBlock = () => {
     "Academic Manager",
     "Faculty",
     "Dean",
-    "Hod",
+    "HOD",
     "Asset Manager",
     "Grievance Manager",
     "Schedule Manager",
@@ -323,7 +323,6 @@ const UnBlock = () => {
         </div>
       )}
 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </div>
   );
 };

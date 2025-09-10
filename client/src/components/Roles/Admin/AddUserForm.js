@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { ThemeContext } from "../../../context/ThemeContext";
 import { getThemeStyles } from "../../../utils/themeStyles";
 import axios from "axios";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const AddUserForm = () => {
@@ -14,7 +14,7 @@ const AddUserForm = () => {
     "Academic Manager",
     "Faculty",
     "Dean",
-    "Hod",
+    "HOD",
     "Asset Manager",
     "Grievance Manager",
     "Schedule Manager",
@@ -253,7 +253,6 @@ const AddUserForm = () => {
         {loading ? 'Adding User...' : 'Add User'}
       </button>
 
-      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

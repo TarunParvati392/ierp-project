@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { ThemeContext } from "../../../context/ThemeContext";
 import { getThemeStyles } from "../../../utils/themeStyles";
 import axios from "axios";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const CreateBatchForm = () => {
@@ -155,7 +155,6 @@ const CreateBatchForm = () => {
       >
         {loading ? 'Creating Batch...' : 'Create Batch'}
       </button>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover />
     </div>
   );
 };

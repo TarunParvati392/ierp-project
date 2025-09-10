@@ -40,6 +40,12 @@ app.use('/api/batches', batchRoutes);
 const adminRoutes = require('./routes/admin/adminRoutes');
 app.use('/api/admin', adminRoutes);
 
+const staffRoutes = require('./routes/academicManagerRoutes/staffRoutes');
+app.use('/api/staff', staffRoutes);
+
+const schoolRoutes = require('./routes/commonRoutes/schoolRoutes');
+app.use('/api/schools', schoolRoutes);
+
 //const faceLockRoutes = require('./routes/faceLockRoutes');
 //app.use('/api/facelock', faceLockRoutes);
 

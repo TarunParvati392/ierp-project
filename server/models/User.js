@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
   batch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', default: null },
   section_id: { type: String, default: null }, // section name (A, B, C…)
 
-  // 🔗 Faculty/Dean/HoD Mappings
+  // 🔗 Faculty/Dean/HOD Mappings
   school_id: { type: mongoose.Schema.Types.ObjectId, ref: 'School', default: null },
   department_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', default: null },
 }, { timestamps: true });

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ThemeContext } from '../../context/ThemeContext';
 import { getThemeStyles } from '../../utils/themeStyles';
 import api from '../../utils/api';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
@@ -104,7 +104,6 @@ const PasswordChangeForm = () => {
       >
         {loading ? 'Updating...' : 'Update Password'}
       </button>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </div>
   );
 };
