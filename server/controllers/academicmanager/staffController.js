@@ -239,7 +239,6 @@ exports.getHODbyDepartment = async (req, res) => {
 
     res.json({ HOD });
   } catch(err){
-    console.error("Error fetching HOD by department:", err);
     res.status(500).json({ message: "Error fetching HOD" });
   }
 };
@@ -284,4 +283,115 @@ exports.deAssignHOD = async (req, res) => {
     } catch (err){
       res.status(500).json({ message: "Error De-Assigning HOD"});
     }
+};
+
+exports.assignFaculty = async (req, res) => {
+  try{
+    const { FacultyId, schoolId, departmentId } = req.body;
+
+    if (!FacultyId || !schoolId || !departmentId) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Validate Faculty
+    const faculty = await User.findOne({ _id: FacultyId, role: "Faculty" });
+    if (!faculty) return res.status(404).json({ message: "Faculty not found" });
+
+    // Validate School
+    const school = await School.findOne({ _id: new mongoose.Types.ObjectId(schoolId) });
+    if (!school) return res.status(404).json({ message: "School not found" });
+
+    // Validate Department
+    const department = await Department.findOne({ _id: new mongoose.Types.ObjectId(departmentId), 
+      school_id: new mongoose.Types.ObjectId(schoolId) });
+    if (!department) return res.status(404).json({ message: "Department not found" });
+
+    // Check if Faculty is already assigned
+    if (faculty.department_id) {
+      return res.status(400).json({ message: "This Faculty is already assigned in another department" });
+    }
+
+    // Assign
+    faculty.school_id = schoolId;
+    faculty.department_id = departmentId;
+    await faculty.save();
+
+    // Send mail
+    await sendEmail(
+      faculty.email,
+      "iERP: Faculty Assignment",
+      undefined,
+      `<p>Dear ${faculty.name},</p>
+       <p>You have been assigned to the department <b>${department.department_name}</b> 
+       in the school <b>${school.school_name}</b>.</p>
+       <p>Regards,<br/>Academic Manager</p>`
+    );
+
+    return res.json({ message: "Faculty assigned successfully and email sent" });
+  } catch (err) {
+    console.error("Assign Faculty error:", err);
+    res.status(500).json({ message: "Error assigning Faculty" });
+  }
+};
+
+exports.getFacultybyDepartment = async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+    const faculty = await User.find({
+      role: "Faculty",
+      department_id: new mongoose.Types.ObjectId(departmentId)
+    }).select("name userId email");
+
+    if (!faculty || faculty.length === 0) {
+      return res.json({ faculty: [] });
+    }
+
+    res.json({ faculty });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching Faculty" });
+  }
+};
+
+exports.deAssignFaculty = async (req, res) => {
+  try {
+    const { schoolId, departmentId, facultyId } = req.body;
+    if (!schoolId) return res.status(400).json({ message: "School ID is Required"});
+    if (!departmentId) return res.status(400).json({ message: "Department ID is Required"});
+    if (!facultyId) return res.status(400).json({ message: "Faculty ID is Required"});
+
+    //Find Faculty
+    const faculty = await User.findOne({
+      _id: new mongoose.Types.ObjectId(facultyId),
+      role: "Faculty",
+      school_id: new mongoose.Types.ObjectId(schoolId),
+      department_id: new mongoose.Types.ObjectId(departmentId),
+    })
+
+    if (!faculty) return res.status(400).json({ message: "Faculty Not Assigned to this Department"});
+
+    //Remove Faculty School and Department ID's
+    faculty.school_id = null;
+    faculty.department_id = null;
+    await faculty.save();
+
+    const school = await School.findOne({ _id: new mongoose.Types.ObjectId(schoolId) });
+    const department = await Department.findOne({
+      _id: new mongoose.Types.ObjectId(departmentId),
+    });
+
+    //Send Mail
+    await sendEmail(
+      faculty.email,
+      "iERP: Faculty De-Assigned",
+      undefined,
+      `<p>Dear ${faculty.name},</P>
+       <p>You have been <b>De-Assigned</b> from the Department: <b>${department.department_name}</b> under the School: <b>${school.school_name}</b>.</p>
+       <p> If you think this is a mistake, please contact Administration.</p>
+       <br/>
+       <p>Regards,<br/>iERP Team</p>`
+    );
+    res.json({ message: "Faculty De-Assigned successfully and email sent" });
+  } catch (err) {
+    res.status(500).json({ message: "Error de-assigning Faculty" });
+  }
 };

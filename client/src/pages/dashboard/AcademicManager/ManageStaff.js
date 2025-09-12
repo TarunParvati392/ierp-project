@@ -2,6 +2,8 @@ import AssignDean from "../../../components/Roles/AcademicManager/AssignDean";
 import DeAssignDean from "../../../components/Roles/AcademicManager/DeAssignDean";
 import AssignHoD from "../../../components/Roles/AcademicManager/AssignHod";
 import DeassignHOD from "../../../components/Roles/AcademicManager/DeassignHOD";
+import AssignFaculty from "../../../components/Roles/AcademicManager/AssignFaculty";
+import DeassignFaculty from "../../../components/Roles/AcademicManager/DeAssignFaculty";
 
 const ManageStaffTab = () => {
   return (
@@ -11,6 +13,8 @@ const ManageStaffTab = () => {
       <DeAssignDean />
       <AssignHoD />
       <DeassignHOD />
+      <AssignFaculty />
+      <DeassignFaculty />
     </div>
   );
 };
