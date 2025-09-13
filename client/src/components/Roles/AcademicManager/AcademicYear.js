@@ -246,7 +246,7 @@ const CreateAcademicYear = () => {
                   {batches[idx] &&
                     batches[idx].map((b) => (
                       <option key={b._id} value={b._id}>
-                        {b.batch_name}
+                        {b.batchName ? `${b.batchName} (${b.prefix})` : b.batch_name}
                       </option>
                     ))}
                 </select>
