@@ -15,6 +15,7 @@ import BlockUsers from './pages/dashboard/Admin/BlockUsers';
 import UnBlock from './pages/dashboard/Admin/UnBlock';
 import DeleteUsers from './pages/dashboard/Admin/DeleteUsers';
 import ManageStaffTab from './pages/dashboard/AcademicManager/ManageStaff';
+import ManageAcademicsTab from './pages/dashboard/AcademicManager/ManageAcademics';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -25,6 +26,7 @@ const App = () => {
       <ToastContainer position="top-right" autoClose={3000} />
       <Router>
         <Routes>
+          <Route path="*" element={<h1 className="text-center mt-20">404 - Page Not Found</h1>} />
           <Route path="/" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
@@ -38,6 +40,8 @@ const App = () => {
             <Route path="unblock-users" element={<UnBlock />} />
             <Route path="delete-users" element={<DeleteUsers />} />
             <Route path="manage-staff" element={<ManageStaffTab />} />
+            <Route path="manage-academics" element={<ManageAcademicsTab />} />
+            <Route path="*" element={<h1 className="text-center mt-20">404 - Page Not Found</h1>} />
           </Route>
         </Routes>
       </Router>
