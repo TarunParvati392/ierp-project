@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { ThemeContext } from "../../../context/ThemeContext";
 import { getThemeStyles } from "../../../utils/themeStyles";
@@ -8,15 +10,14 @@ const CreateAcademicYear = () => {
   const Styles = getThemeStyles(theme);
 
   const [form, setForm] = useState({
-    yearName: "",
-    startDate: "",
-    endDate: "",
-    programs: [{ degree_id: "", specialization_id: "", batch_id: "" }],
+    academicYear: "",
+    programs: [{ degree_id: "", specialization_id: "", batch_id: "", startDate: "", endDate: "" }],
   });
 
   const [degrees, setDegrees] = useState([]);
   const [specializations, setSpecializations] = useState([[]]); // per program index
   const [batches, setBatches] = useState([[]]); // per program index
+  const [batchDropdownOpen, setBatchDropdownOpen] = useState([]); // per program index
 
   useEffect(() => {
     axios
@@ -50,7 +51,7 @@ const CreateAcademicYear = () => {
 
       setSpecializations((prev) => {
         const updated = [...prev];
-        updated[idx] = res.data;
+        updated[idx] = res.data; // ✅ FIX: store specializations properly
         return updated;
       });
 
@@ -66,6 +67,16 @@ const CreateAcademicYear = () => {
       }
     } catch (err) {
       console.error("Error loading specializations:", err);
+      setSpecializations((prev) => {
+        const updated = [...prev];
+        updated[idx] = [];
+        return updated;
+      });
+      setBatches((prev) => {
+        const updated = [...prev];
+        updated[idx] = [];
+        return updated;
+      });
     }
   };
 
@@ -92,15 +103,34 @@ const CreateAcademicYear = () => {
   // 🔹 Update program and trigger dependent loads
   const updateProgram = (index, field, value) => {
     const updated = [...form.programs];
-    updated[index][field] = value;
+    if (field === "batches") {
+      updated[index][field] = value; // value is array of batch ids
+    } else {
+      updated[index][field] = value;
+    }
+
+    if (field === "startDate") {
+      // Always auto-set end date to exactly one year after start date (minus one day)
+      if (value) {
+        const start = new Date(value);
+        const end = new Date(start);
+        end.setFullYear(start.getFullYear() + 1);
+        end.setDate(end.getDate() - 1);
+        updated[index]["endDate"] = end.toISOString().slice(0, 10);
+      } else {
+        updated[index]["endDate"] = "";
+      }
+      setForm({ ...form, programs: updated });
+      return;
+    }
 
     if (field === "degree_id") {
       updated[index]["specialization_id"] = "";
-      updated[index]["batch_id"] = "";
+      updated[index]["batches"] = [];
       setForm({ ...form, programs: updated });
       fetchSpecializations(value, index);
     } else if (field === "specialization_id") {
-      updated[index]["batch_id"] = "";
+      updated[index]["batches"] = [];
       setForm({ ...form, programs: updated });
       fetchBatches(updated[index]["degree_id"], value, index);
     } else {
@@ -111,7 +141,7 @@ const CreateAcademicYear = () => {
   const addProgram = () => {
     setForm({
       ...form,
-      programs: [...form.programs, { degree_id: "", specialization_id: "", batch_id: "" }],
+      programs: [...form.programs, { degree_id: "", specialization_id: "", batch_id: "", startDate: "", endDate: "" }],
     });
     setSpecializations((prev) => [...prev, []]);
     setBatches((prev) => [...prev, []]);
@@ -134,15 +164,48 @@ const CreateAcademicYear = () => {
     });
   };
 
+  const [specializationErrors, setSpecializationErrors] = useState([]);
+
   const handleSubmit = async () => {
+    // Validate dates and specialization for each program
+    let specErrors = [];
+    for (const [idx, p] of form.programs.entries()) {
+      if (!p.startDate || !p.endDate) {
+        toast.error(`Please enter start and end date for Program ${idx + 1}`);
+        return;
+      }
+      const start = new Date(p.startDate);
+      const end = new Date(p.endDate);
+      // Check if exactly one year (365 days difference, not less or more)
+      const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
+      if (diffDays !== 364) {
+        toast.error(`Start and End date must be exactly one year apart for Program ${idx + 1}`);
+        return;
+      }
+      if (end <= start) {
+        toast.error(`End date must be after start date for Program ${idx + 1}`);
+        return;
+      }
+      // Specialization mandatory if specializations are loaded for this degree
+      if (specializations[idx] && specializations[idx].length > 0 && !p.specialization_id) {
+        specErrors[idx] = true;
+        toast.error(`Please select specialization for Program ${idx + 1}`);
+        setSpecializationErrors(specErrors);
+        return;
+      } else {
+        specErrors[idx] = false;
+      }
+    }
+    setSpecializationErrors(specErrors);
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/academic-years`, form, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/academic-years/create`, form, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-      alert("Academic Year Created!");
+      toast.success("Academic Year Created!");
     } catch (err) {
       console.error(err);
-      alert("Error creating academic year");
+      const errorMsg = err?.response?.data?.message || "Error creating academic year";
+      toast.error(errorMsg);
     }
   };
 
@@ -154,28 +217,12 @@ const CreateAcademicYear = () => {
       <input
         type="text"
         placeholder="Academic Year (e.g. 2025-26)"
-        value={form.yearName}
-        onChange={(e) => setForm({ ...form, yearName: e.target.value })}
+        value={form.academicYear}
+        onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
         className="w-full border rounded px-3 py-2 my-2 bg-white text-black"
       />
 
-      {/* Dates */}
-      <div className="grid grid-cols-2 gap-4">
-        <input
-          type="date"
-          value={form.startDate}
-          onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-          className="w-full border rounded px-3 py-2 bg-white text-black"
-          placeholder="Start Date"
-        />
-        <input
-          type="date"
-          value={form.endDate}
-          onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-          className="w-full border rounded px-3 py-2 bg-white text-black"
-          placeholder="End Date"
-        />
-      </div>
+      {/* Dates removed from global form, now per program */}
 
       <hr className="my-4" />
 
@@ -196,6 +243,23 @@ const CreateAcademicYear = () => {
                   &times;
                 </button>
               </div>
+              {/* Start/End Date for each program */}
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <input
+                  type="date"
+                  value={p.startDate}
+                  onChange={e => updateProgram(idx, "startDate", e.target.value)}
+                  className="w-full border rounded px-3 py-2 bg-white text-black"
+                  placeholder="Start Date"
+                />
+                <input
+                  type="date"
+                  value={p.endDate}
+                  onChange={e => updateProgram(idx, "endDate", e.target.value)}
+                  className="w-full border rounded px-3 py-2 bg-white text-black"
+                  placeholder="End Date"
+                />
+              </div>
 
               {/* Degree Dropdown */}
               <select
@@ -212,44 +276,71 @@ const CreateAcademicYear = () => {
                 ))}
               </select>
 
-              {/* Specialization Dropdown (always show if degree selected) */}
-              {p.degree_id && (
-                <select
-                  value={p.specialization_id}
-                  onChange={(e) => updateProgram(idx, "specialization_id", e.target.value)}
-                  className="w-full border rounded px-3 py-2 mb-2 bg-white text-black"
-                  disabled={specializations[idx] && specializations[idx].length === 0}
-                >
-                  <option value="">-- Select Specialization --</option>
-                  {specializations[idx] && specializations[idx].length === 0 && (
-                    <option disabled>No specializations available</option>
-                  )}
-                  {specializations[idx] && specializations[idx].map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.specialization_name}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {/* Batch Dropdown (always show if degree selected and (no specializations or specialization selected)) */}
-              {p.degree_id && ((specializations[idx] && specializations[idx].length === 0) || p.specialization_id) && (
-                <select
-                  value={p.batch_id}
-                  onChange={(e) => updateProgram(idx, "batch_id", e.target.value)}
-                  className="w-full border rounded px-3 py-2 bg-white text-black"
-                >
-                  <option value="">-- Select Batch --</option>
-                  {batches[idx] && batches[idx].length === 0 && (
-                    <option disabled>No batches available</option>
-                  )}
-                  {batches[idx] &&
-                    batches[idx].map((b) => (
-                      <option key={b._id} value={b._id}>
-                        {b.batchName ? `${b.batchName} (${b.prefix})` : b.batch_name}
+              {/* Specialization Dropdown (only if degree has specializations) */}
+              {p.degree_id && specializations[idx] && specializations[idx].length > 0 && (
+                <>
+                  <select
+                    value={p.specialization_id}
+                    onChange={(e) => updateProgram(idx, "specialization_id", e.target.value)}
+                    className="w-full border rounded px-3 py-2 mb-2 bg-white text-black"
+                  >
+                    <option value="">-- Select Specialization --</option>
+                    {specializations[idx].map((s) => (
+                      <option key={s._id} value={s._id}>
+                        {s.specialization_name}
                       </option>
                     ))}
-                </select>
+                  </select>
+                  {specializationErrors[idx] && (
+                    <div className="text-red-600 text-sm mb-2">Specialization is required for this program.</div>
+                  )}
+                </>
+              )}
+
+              {/* Batch Multi-select Dropdown with Checkboxes */}
+              {p.degree_id && ((specializations[idx] && specializations[idx].length === 0) || p.specialization_id) && (
+                <div className="relative mb-2">
+                  <div
+                    className="w-full border rounded px-3 py-2 bg-white text-black cursor-pointer flex justify-between items-center"
+                    onClick={() => {
+                      setBatchDropdownOpen(prev => {
+                        const arr = [...prev];
+                        arr[idx] = !arr[idx];
+                        return arr;
+                      });
+                    }}
+                  >
+                    {Array.isArray(p.batches) && p.batches.length > 0
+                      ? `${p.batches.length} batch(es) selected`
+                      : "-- Select Batch(es) --"}
+                    <span className="ml-2">▼</span>
+                  </div>
+                  {batchDropdownOpen[idx] && (
+                    <div className="absolute z-10 bg-white border rounded shadow-md mt-1 w-full max-h-40 overflow-y-auto">
+                      {batches[idx] && batches[idx].length === 0 && (
+                        <div className="text-gray-500 px-3 py-2">No batches available</div>
+                      )}
+                      {batches[idx] && batches[idx].map((b) => (
+                        <label key={b._id} className="flex items-center gap-1 px-3 py-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={Array.isArray(p.batches) && p.batches.includes(b._id)}
+                            onChange={e => {
+                              let newBatches = Array.isArray(p.batches) ? [...p.batches] : [];
+                              if (e.target.checked) {
+                                newBatches.push(b._id);
+                              } else {
+                                newBatches = newBatches.filter(id => id !== b._id);
+                              }
+                              updateProgram(idx, "batches", newBatches);
+                            }}
+                          />
+                          {b.batchName ? `${b.batchName} (${b.prefix})` : b.batch_name}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

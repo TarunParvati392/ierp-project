@@ -46,6 +46,8 @@ app.use('/api/staff', staffRoutes);
 const schoolRoutes = require('./routes/commonRoutes/schoolRoutes');
 app.use('/api/schools', schoolRoutes);
 
+const academicRoutes = require('./routes/academicManagerRoutes/acadeicRoutes');
+app.use('/api/academic-years', academicRoutes);
 //const faceLockRoutes = require('./routes/faceLockRoutes');
 //app.use('/api/facelock', faceLockRoutes);
 
