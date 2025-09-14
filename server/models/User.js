@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
   degree_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Degree', default: null },
   specialization_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Specialization', default: null },
   batch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch', default: null },
-  section_id: { type: String, default: null }, // section name (A, B, C…)
+  section_id: { type: mongoose.Schema.Types.ObjectId, default: null },
 
   // 🔗 Faculty/Dean/HOD Mappings
   school_id: { type: mongoose.Schema.Types.ObjectId, ref: 'School', default: null },
