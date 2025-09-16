@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const facultyAssignmentSchema = new mongoose.Schema({
   faculty: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  sections: [{ type: String, required: true }]
+  sections: [{ type: mongoose.Schema.Types.ObjectId, ref: "Section", required: true }]
 });
 
 const subjectSchema = new mongoose.Schema({

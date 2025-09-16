@@ -1,5 +1,6 @@
 import CreateAcademicYear from "../../../components/Roles/AcademicManager/AcademicYear";
 import CreateTerm from "../../../components/Roles/AcademicManager/CreateTerm";
+import AssignSubject from "../../../components/Roles/AcademicManager/AssignSubject";
 
 const ManageAcademicsTab = () => {
   return (
@@ -7,6 +8,7 @@ const ManageAcademicsTab = () => {
       <h2 className="text-2xl font-bold mb-4">Manage Academics</h2>
         <CreateAcademicYear />
         <CreateTerm />
+        <AssignSubject />
     </div>
   );
 };
