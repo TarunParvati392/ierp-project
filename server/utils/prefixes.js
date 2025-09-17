@@ -4,7 +4,7 @@ module.exports = {
   'Academic Manager': 'ACDM',
   Faculty: 'FAC',
   Dean: 'DEAN',
-  Hod: 'HOD',
+  HOD: 'HOD',
   'Asset Manager': 'ASM',
   'Grievance Manager': 'GRM',
   'Schedule Manager': 'SCM',
