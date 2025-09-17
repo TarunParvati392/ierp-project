@@ -171,7 +171,7 @@ const DeleteUsers = () => {
     setLoading(true);
     try {
       await axios.delete(
-        `${process.env.REACT_APP_API_URL}/admin/delete-user/${deleteUserId}`,
+        `${process.env.REACT_APP_API_URL}/admin/delete/${deleteUserId}`,
         {
           data: { reason },
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },

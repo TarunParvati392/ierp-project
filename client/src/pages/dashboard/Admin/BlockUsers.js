@@ -12,6 +12,7 @@ const BlockUsers = () => {
 
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [search, setSearch] = useState("");
   // Filter UI state
   const [filterType, setFilterType] = useState('role'); // 'role', 'degree', or 'batch'
@@ -45,6 +46,7 @@ const BlockUsers = () => {
 
   // 🔹 Fetch users
   const fetchUsers = async () => {
+    setUsersLoading(true);
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/admin/unblocked`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -54,6 +56,8 @@ const BlockUsers = () => {
     } catch (err) {
       console.error(err);
       toast.error("Error fetching users");
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -267,48 +271,52 @@ const BlockUsers = () => {
 
       {/* Users Table */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border">
-          <thead>
-            <tr className={theme === 'dark' ? "bg-gray-800 text-white" : theme === 'light' ? "bg-gray-200 text-gray-800" : "bg-gradient-to-r from-purple-500 via-indigo-600 to-blue-500 text-white"}>
-              <th className="border px-2 py-1">S.No</th>
-              <th className="border px-2 py-1">UID</th>
-              <th className="border px-2 py-1">Name</th>
-              <th className="border px-2 py-1">Role</th>
-              <th className="border px-2 py-1">Degree</th>
-              <th className="border px-2 py-1">Specialization</th>
-              <th className="border px-2 py-1">Batch</th>
-              <th className="border px-2 py-1">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="text-center py-2">No users found</td>
+        {usersLoading ? (
+          <div className="text-center py-4 text-lg text-gray-600">Loading Users...</div>
+        ) : (
+          <table className="w-full border-collapse border">
+            <thead>
+              <tr className={theme === 'dark' ? "bg-gray-800 text-white" : theme === 'light' ? "bg-gray-200 text-gray-800" : "bg-gradient-to-r from-purple-500 via-indigo-600 to-blue-500 text-white"}>
+                <th className="border px-2 py-1">S.No</th>
+                <th className="border px-2 py-1">UID</th>
+                <th className="border px-2 py-1">Name</th>
+                <th className="border px-2 py-1">Role</th>
+                <th className="border px-2 py-1">Degree</th>
+                <th className="border px-2 py-1">Specialization</th>
+                <th className="border px-2 py-1">Batch</th>
+                <th className="border px-2 py-1">Action</th>
               </tr>
-            ) : (
-              filteredUsers.map((u, i) => (
-                <tr key={u._id} className="text-center">
-                  <td className="border px-2 py-1">{i + 1}</td>
-                  <td className="border px-2 py-1">{u.userId}</td>
-                  <td className="border px-2 py-1">{u.name}</td>
-                  <td className="border px-2 py-1">{u.role}</td>
-                  <td className="border px-2 py-1">{u.degree || "-"}</td>
-                  <td className="border px-2 py-1">{u.specialization || "-"}</td>
-                  <td className="border px-2 py-1">{u.batch || "-"}</td>
-                  <td className="border px-2 py-1">
-                    <button
-                      onClick={() => { setBlockUserId(u._id); setShowModal(true); }}
-                      className={`bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded`}
-                      disabled={loading}
-                    >
-                      {loading && blockUserId === u._id ? 'Blocking...' : 'Block'}
-                    </button>
-                  </td>
+            </thead>
+            <tbody>
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center py-2">No users found</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredUsers.map((u, i) => (
+                  <tr key={u._id} className="text-center">
+                    <td className="border px-2 py-1">{i + 1}</td>
+                    <td className="border px-2 py-1">{u.userId}</td>
+                    <td className="border px-2 py-1">{u.name}</td>
+                    <td className="border px-2 py-1">{u.role}</td>
+                    <td className="border px-2 py-1">{u.degree || "-"}</td>
+                    <td className="border px-2 py-1">{u.specialization || "-"}</td>
+                    <td className="border px-2 py-1">{u.batch || "-"}</td>
+                    <td className="border px-2 py-1">
+                      <button
+                        onClick={() => { setBlockUserId(u._id); setShowModal(true); }}
+                        className={`bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded`}
+                        disabled={loading}
+                      >
+                        {loading && blockUserId === u._id ? 'Blocking...' : 'Block'}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Block Modal */}
