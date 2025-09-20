@@ -50,7 +50,9 @@ exports.createBatch = async (req, res) => {
       prefix,
       degree_id,
       specialization_id: specialization_id || null,
+      school_id: school._id,
       schoolName: school.school_name,
+      department_id: department._id,
       departmentName: department.department_name
     });
 

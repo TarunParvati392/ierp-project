@@ -89,7 +89,7 @@ exports.getAcademicYears = async (req, res) => {
     const years = await AcademicYear.find({})
       .populate("programs.degree_id", "degree_name")
       .populate("programs.specialization_id", "specialization_name")
-      .populate("programs.batches", "batchName");
+      .populate("programs.batches", "batchName department_id school_id");
 
     res.json(years);
   } catch (err) {

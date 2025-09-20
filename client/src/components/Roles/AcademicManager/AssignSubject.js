@@ -31,6 +31,7 @@ const AssignSubject = () => {
 
   // faculty list & workload
   const [faculties, setFaculties] = useState([]);
+  const [facultyLoading, setFacultyLoading] = useState(false);
   const [facultyWorkloadCache, setFacultyWorkloadCache] = useState({}); // facultyId -> { subjectsCount, sectionsCount }
 
   // modal state
@@ -45,22 +46,56 @@ const AssignSubject = () => {
   // base headers
   const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }});
 
-  // --- Initial: load academic years + faculties ---
+  // --- Initial: load academic years only ---
   useEffect(() => {
     (async () => {
       try {
-        const [yearsRes, facultyRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/academic-years`, authHeaders()),
-          axios.get(`${process.env.REACT_APP_API_URL}/staff/faculty`, authHeaders()), // expected endpoint
-        ]);
+        const yearsRes = await axios.get(`${process.env.REACT_APP_API_URL}/academic-years`, authHeaders());
         setYears(yearsRes.data || []);
-        setFaculties(facultyRes.data || []);
       } catch (err) {
         console.error("Init load error:", err);
         toast.error("Failed loading initial data");
       }
     })();
   }, []);
+  // --- Load faculty by department when batch or term changes ---
+  useEffect(() => {
+    const loadFaculty = async () => {
+      setFaculties([]);
+      if (!selectedBatch) return;
+      // Find departmentId from selectedBatch or from termData.batch_id
+      let departmentId = null;
+      if (selectedBatch && batches.length > 0) {
+        const batchObj = batches.find(b => b._id === selectedBatch);
+        departmentId = batchObj?.department_id || null;
+      }
+      // Fallback: try to get department_id from termsForBatch if not found above
+      if (!departmentId && termsForBatch.length > 0) {
+        const termBatch = termsForBatch.find(t => t.batch_id?._id === selectedBatch);
+        departmentId = termBatch?.batch_id?.department_id || null;
+      }
+      // Fallback: try to get department_id from termData.batch_id if not found above
+      if (!departmentId && termData?.batch_id?.department_id) {
+        departmentId = termData.batch_id.department_id;
+      }
+      if (!departmentId) {
+        console.error("Department ID not found for selected batch:", selectedBatch, batches, termData?.batch_id);
+        toast.error("Department ID not found for selected batch. Please check batch data.");
+        return;
+      }
+      setFacultyLoading(true);
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/staff/faculty/${departmentId}`, authHeaders());
+        setFaculties(res.data.faculty || []);
+      } catch (err) {
+        console.error("Error loading faculty by department:", err);
+        toast.error("Failed to load faculty for department");
+      } finally {
+        setFacultyLoading(false);
+      }
+    };
+    loadFaculty();
+  }, [selectedBatch, batches, termData]);
 
   // --- when year changes, set programs ---
   useEffect(() => {
@@ -178,7 +213,7 @@ const AssignSubject = () => {
     if (!facultyId) return null;
     if (facultyWorkloadCache[facultyId]) return facultyWorkloadCache[facultyId];
     try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/faculty/${facultyId}/assignments`, authHeaders());
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/terms/faculty/${facultyId}/assignments`, authHeaders());
       const data = res.data || {};
       setFacultyWorkloadCache(prev => ({ ...prev, [facultyId]: data }));
       return data;
@@ -243,7 +278,7 @@ const AssignSubject = () => {
       setLoading(true);
       const payload = { faculty: modalFaculty, sections: modalSelectedSections };
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL}/faculty-assignment/${selectedTerm}/subjects/${modalSubject._id}/assign-faculty`,
+        `${process.env.REACT_APP_API_URL}/terms/${selectedTerm}/subjects/${modalSubject._id}/faculty`,
         payload,
         authHeaders()
       );
@@ -253,6 +288,7 @@ const AssignSubject = () => {
       const fresh = await axios.get(`${process.env.REACT_APP_API_URL}/terms/${selectedTerm}`, authHeaders());
       setTermData(fresh.data);
       closeModal();
+      window.location.reload(); // Reload the page after assignment
     } catch (err) {
       console.error("Assign failed:", err);
       const msg = err?.response?.data?.message || "Assign failed";
@@ -361,13 +397,19 @@ const AssignSubject = () => {
                 <label className="block text-sm mb-1">Select Faculty</label>
                 <select value={modalFaculty} onChange={e => setModalFaculty(e.target.value)} className="w-full border rounded px-3 py-2">
                   <option value="">-- Select Faculty --</option>
-                  {faculties.map(f => <option key={f._id} value={f._id}>{f.name} ({f.email})</option>)}
+                  {facultyLoading ? (
+                    <option disabled>Loading faculty...</option>
+                  ) : faculties.length === 0 ? (
+                    <option disabled>No faculty found for department</option>
+                  ) : (
+                    faculties.map(f => <option key={f._id} value={f._id}>{f.name} ({f.email})</option>)
+                  )}
                 </select>
                 {/* workload hint */}
                 {modalFaculty && facultyWorkloadCache[modalFaculty] && (
                   <div className="mt-2 text-sm text-gray-600">
-                    <div>Assigned Subjects: {facultyWorkloadCache[modalFaculty].subjectsCount}</div>
-                    <div>Assigned Sections: {facultyWorkloadCache[modalFaculty].sectionsCount}</div>
+                    <div>Assigned Subjects: {facultyWorkloadCache[modalFaculty].totalSubjects}</div>
+                    <div>Assigned Sections: {facultyWorkloadCache[modalFaculty].totalSections}</div>
                   </div>
                 )}
               </div>

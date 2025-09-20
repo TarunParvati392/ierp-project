@@ -1,4 +1,5 @@
 const Term = require("../../models/Term");
+const mongoose = require("mongoose");
 const AcademicYear = require("../../models/AcademicYear");
 const User = require("../../models/User"); // Assuming faculty are Users with role "Faculty"
 
@@ -58,7 +59,7 @@ exports.getTermsByBatch = async (req, res) => {
       .select("_id termName academicYear program_id batch_id") // keep it light
       .populate("academicYear", "academicYear")
       .populate("program_id", "degree_id specialization_id")
-      .populate("batch_id", "batchName");
+      .populate("batch_id", "batchName department_id school_id");
 
     res.json(terms);
   } catch (err) {
@@ -137,6 +138,53 @@ exports.assignFacultyToSubject = async (req, res) => {
     res.status(200).json({ message: "Faculty assigned successfully", subject });
   } catch (err) {
     console.error("Error assigning faculty:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+exports.getFacultyAssignments = async (req, res) => {
+  try {
+    const { facultyId } = req.params;
+    if (!facultyId) return res.status(400).json({ message: "Faculty ID is required" });
+
+    // 🔹 Find all terms where this faculty appears
+    const terms = await Term.find({ "subjects.facultyAssignments.faculty": facultyId })
+      .populate("academicYear", "academicYear")
+      .populate("batch_id", "batchName")
+      .lean();
+
+    // Flatten assignments
+    let assignments = [];
+    terms.forEach(term => {
+      term.subjects.forEach(sub => {
+        sub.facultyAssignments.forEach(fa => {
+          if (fa.faculty?.toString() === facultyId.toString()) {
+            assignments.push({
+              termId: term._id,
+              termName: term.termName,
+              academicYear: term.academicYear?.academicYear,
+              batch: term.batch_id?.batchName,
+              subjectName: sub.subjectName,
+              subjectCode: sub.subjectCode,
+              sections: fa.sections || []
+            });
+          }
+        });
+      });
+    });
+
+    // 🔹 Summarize workload
+    const totalSubjects = new Set(assignments.map(a => a.subjectCode)).size;
+    const totalSections = assignments.reduce((acc, a) => acc + a.sections.length, 0);
+
+    res.json({
+      facultyId,
+      totalSubjects,
+      totalSections,
+      assignments
+    });
+  } catch (err) {
+    console.error("Error fetching faculty assignments:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };

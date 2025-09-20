@@ -13,6 +13,8 @@ const batchSchema = new mongoose.Schema({
   prefix: { type: String, required: true },    // e.g. MCA23
   degree_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Degree', required: true },
   specialization_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Specialization', default: null },
+  school_id: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true },
+  department_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: true },
 
   totalStudents: { type: Number, default: 0 }, // auto-updated when new students added
 
