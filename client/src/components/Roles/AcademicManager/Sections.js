@@ -109,7 +109,7 @@ const ManageSections = () => {
       <select
         value={form.academicYear}
         onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
-        className="w-full border rounded px-3 py-2 mb-2"
+        className="w-full border rounded px-3 py-2 mb-2 bg-white text-black"
       >
         <option value="">-- Select Academic Year --</option>
         {academicYears.map((y) => (
@@ -123,7 +123,7 @@ const ManageSections = () => {
       <select
         value={form.program_id}
         onChange={(e) => setForm({ ...form, program_id: e.target.value })}
-        className="w-full border rounded px-3 py-2 mb-2"
+        className="w-full border rounded px-3 py-2 mb-2 bg-white text-black"
         disabled={!form.academicYear}
       >
         <option value="">-- Select Program --</option>
