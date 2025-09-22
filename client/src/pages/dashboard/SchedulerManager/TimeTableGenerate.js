@@ -53,6 +53,7 @@ const GenerateTimetable = () => {
       try {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/schools`, authHeaders());
         setSchools(res.data || []);
+        console.log(res.data);
       } catch (err) {
         toast.error("Failed to load schools");
       }
@@ -68,8 +69,9 @@ const GenerateTimetable = () => {
     }
     (async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/schools/departments/by-school/${selectedSchool}`, authHeaders());
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/schools/departments/${selectedSchool}`, authHeaders());
         setDepartments(res.data || []);
+        console.log(res.data);
       } catch (err) {
         toast.error("Failed to load departments");
       }
@@ -162,11 +164,11 @@ const GenerateTimetable = () => {
         </select>
         <select value={selectedSchool} onChange={e => setSelectedSchool(e.target.value)} className="border rounded px-3 py-2 bg-white text-black">
           <option value="">-- School --</option>
-          {schools.map(s => <option key={s._id} value={s._id}>{s.schoolName}</option>)}
+          {schools.map(s => <option key={s._id} value={s._id}>{s.schoolName || s.school_name}</option>)}
         </select>
         <select value={selectedDepartment} onChange={e => setSelectedDepartment(e.target.value)} className="border rounded px-3 py-2 bg-white text-black" disabled={!selectedSchool}>
           <option value="">-- Department --</option>
-          {departments.map(d => <option key={d._id} value={d._id}>{d.departmentName}</option>)}
+          {departments.map(d => <option key={d._id} value={d._id}>{d.department_name}</option>)}
         </select>
       </div>
 
