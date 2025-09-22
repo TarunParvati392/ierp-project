@@ -68,7 +68,7 @@ const GenerateTimetable = () => {
     }
     (async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/departments/by-school/${selectedSchool}`, authHeaders());
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/schools/departments/by-school/${selectedSchool}`, authHeaders());
         setDepartments(res.data || []);
       } catch (err) {
         toast.error("Failed to load departments");
