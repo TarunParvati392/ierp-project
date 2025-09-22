@@ -1,327 +1,327 @@
 const mongoose = require('mongoose');
+const AcademicYear = require('../../models/AcademicYear');
 const Term = require('../../models/Term');
 const Batch = require('../../models/Batch');
-const Timetable = require('../../models/Timetable');
 const User = require('../../models/User');
+const Timetable = require('../../models/Timetable');
 
+// constants
 const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
-const PERIODS = [1,2,3,4,5,6,7,8]; // 8 periods per day
+const PERIODS = [1,2,3,4,5,6,7,8]; // 8 periods / day
 
-// Helper: produce full slot list
-const buildAllSlots = () => {
-  const slots = [];
-  for (const day of DAYS) {
-    for (const p of PERIODS) {
-      slots.push({ day, period: p });
-    }
-  }
-  return slots; // length = 40
-};
+/**
+ * Helper: initialize empty calendar maps:
+ * - facultySlots[facultyId][day][period] = boolean
+ * - sectionSlots[sectionId][day][period] = boolean
+ */
+function initSlotMap() {
+  return DAYS.reduce((accD, d) => {
+    accD[d] = PERIODS.reduce((accP, p) => (accP[p] = null, accP), {});
+    return accD;
+  }, {});
+}
 
-// Helper: check if faculty is free in slot
-const isFacultyFree = (assignmentsBySlot, slotKey, facultyId) => {
-  const assigned = assignmentsBySlot[slotKey];
-  if (!assigned) return true;
-  // assigned is array of objects with faculty and section
-  return !assigned.some(a => a.faculty && a.faculty.toString() === facultyId.toString());
-};
-
-// Helper: check if section is free in slot
-const isSectionFree = (assignmentsBySlot, slotKey, sectionId) => {
-  const assigned = assignmentsBySlot[slotKey];
-  if (!assigned) return true;
-  return !assigned.some(a => a.section && a.section.toString() === sectionId.toString());
-};
-
-// Convert slot to key
-const slotKey = (s) => `${s.day}_${s.period}`;
-
-// Utility: sort slots to encourage spreading across days (heuristic)
-const orderSlotsForTask = (allSlots, existingAssignedForSection) => {
-  // prefer slots on different days if section already has assignments
-  const usedDays = new Set(existingAssignedForSection.map(a => a.day));
-  const prioritized = [];
-  const others = [];
-  for (const s of allSlots) {
-    if (!usedDays.has(s.day)) prioritized.push(s);
-    else others.push(s);
-  }
-  return [...prioritized, ...others];
-};
-
+/**
+ * generateTimetable (preview)
+ * POST body: { academicYearId, schoolId, departmentId }
+ *
+ * Returns preview object:
+ * {
+ *  facultyEntries: [{ facultyId, facultyName, entries: [{day,period,subject,...}] }, ...],
+ *  sections: [{ sectionId, sectionName, entries: [...] }, ...],
+ *  unscheduled: [ ... ] // sessions that couldn't be placed
+ * }
+ */
 exports.generateTimetable = async (req, res) => {
   try {
-    const { academicYear, department_id, termId, batchId } = req.body;
-    if (!academicYear || !department_id || !termId || !batchId) {
-      return res.status(400).json({ message: "academicYear, department_id, termId, batchId required" });
+    const { academicYearId, schoolId, departmentId } = req.body;
+    console.log("🔎 Incoming request:", { academicYearId, schoolId, departmentId });
+
+
+    if (!academicYearId || !departmentId) return res.status(400).json({ message: "academicYearId & departmentId required" });
+
+    
+    // 1) Find batches for this department that are part of the academicYear
+    const academicYear = await AcademicYear.findById(academicYearId).lean();
+    if (!academicYear) return res.status(404).json({ message: "AcademicYear not found" });
+
+    console.log("✅ AcademicYear found:", academicYear._id);
+
+    // collect batch ids present in academicYear.programs matching departmentId
+    const programBatches = new Set();
+    (academicYear.programs || []).forEach(prog => {
+      (prog.batches || []).forEach(bid => programBatches.add(bid.toString()));
+    });
+
+    // find batches under departmentId and within academicYear programs
+    const batches = await Batch.find({
+      _id: { $in: Array.from(programBatches).map(id => new mongoose.Types.ObjectId(id)) },
+      departmentName: { $exists: true } // optional check
+    }).lean();
+
+    // Filter batches by departmentId (your Batch model may store department id vs name; adapt)
+    // If your Batch has department_id field, use that instead:
+    // const batches = await Batch.find({ _id: { $in: ...}, department_id: departmentId }).lean();
+
+    // For reliability, try to include only those batches whose department matches requested departmentId:
+    const filteredBatches = batches.filter(b => {
+      if (b.department_id) return b.department_id.toString() === departmentId.toString();
+      // fallback: match departmentName via dept collection (skipped)
+      return true;
+    });
+
+    if (filteredBatches.length === 0) {
+      return res.status(404).json({ message: "No batches found for this academic year & department" });
     }
 
-    // Load term (with subjects & faculty assignments)
-    const term = await Term.findById(termId)
-      .populate('subjects.facultyAssignments.faculty', 'name email')
-      .lean();
-    if (!term) return res.status(404).json({ message: "Term not found" });
+    // 2) For each batch, find the current term(s) that belong to this academicYear+batch.
+    // We'll fetch terms for the batches (all terms in DB that match academicYear and batch)
+    const batchIds = filteredBatches.map(b => typeof b._id === 'string' ? new mongoose.Types.ObjectId(b._id) : b._id);
+    const terms = await Term.find({ academicYear: academicYearId, batch_id: { $in: batchIds } }).lean();
 
-    // Load batch (sections)
-    const batch = await Batch.findById(batchId).lean();
-    if (!batch) return res.status(404).json({ message: "Batch not found" });
+    // Build list of sessions to schedule:
+    // For each term -> for each subject -> for each facultyAssignment -> for each section assigned -> create sessions:
+    // Each subject requires 5 sessions per week PER section (3 theory, 2 lab)
+    const sessions = []; // { subjectId, subjectName, kind, facultyId, facultyName, batchId, sectionId, termId }
 
-    const allSlots = buildAllSlots(); // 40 slots
+    for (const term of terms) {
+      const batchId = term.batch_id.toString();
+      for (const subj of (term.subjects || [])) {
+        // subj.facultyAssignments: [{ faculty, sections: [sectionIds] }, ...]
+        const subjectId = subj._id;
+        const subjectName = subj.subjectName || subj.subjectName;
+        // For each faculty assignment
+        for (const fa of (subj.facultyAssignments || [])) {
+          const facultyId = fa.faculty && fa.faculty.toString ? fa.faculty.toString() : fa.faculty;
+          // ensure faculty doc exists
+          const facultyDoc = await User.findById(facultyId).lean();
+          const facultyName = facultyDoc ? facultyDoc.name : null;
 
-    // Build tasks: each task = one slot needed for a subject for a particular section and a particular kind (theory/lab)
-    // For each subject, for each facultyAssignment, for each section in that assignment: create 5 tasks (3 theory, 2 lab)
-    const tasks = []; // { id, subjectId, subjectName, subjectCode, facultyId, facultyName, sectionId, kind }
-    for (const subj of term.subjects) {
-      const subjectId = subj._id;
-      const subjectName = subj.subjectName;
-      const subjectCode = subj.subjectCode;
+          // sections array may be ObjectIds or strings
+          const sectionsAssigned = (fa.sections || []).map(s => s.toString());
 
-      // If a subject has zero facultyAssignments, that's an error — cannot schedule
-      if (!subj.facultyAssignments || subj.facultyAssignments.length === 0) {
-        return res.status(400).json({ message: `Subject ${subjectName} has no faculty assignments. Assign faculty before generating timetable.` });
-      }
-
-      for (const fa of subj.facultyAssignments) {
-        const facultyId = fa.faculty ? fa.faculty._id : fa.faculty;
-        const facultyName = fa.faculty ? (fa.faculty.name || fa.faculty.email) : 'Unknown';
-
-        if (!fa.sections || fa.sections.length === 0) {
-          return res.status(400).json({ message: `Faculty assignment for subject ${subjectName} has no sections.` });
-        }
-
-        for (const secId of fa.sections) {
-          // ensure secId exists in batch
-          const secExists = batch.sections.some(s => s._id.toString() === secId.toString());
-          if (!secExists) {
-            return res.status(400).json({ message: `Section ${secId} (assigned in subject ${subjectName}) not found in batch` });
-          }
-
-          // push 3 theory tasks and 2 lab tasks for this (subject, section, faculty)
-          for (let i=0;i<3;i++) tasks.push({
-            id: mongoose.Types.ObjectId().toString(),
-            subjectId, subjectName, subjectCode, facultyId, facultyName,
-            sectionId: secId, kind: 'theory'
-          });
-          for (let i=0;i<2;i++) tasks.push({
-            id: mongoose.Types.ObjectId().toString(),
-            subjectId, subjectName, subjectCode, facultyId, facultyName,
-            sectionId: secId, kind: 'lab'
-          });
-        }
-      }
-    }
-
-    // Quick feasibility check: total required slots <= total available slots per batch
-    const totalRequired = tasks.length;
-    const totalAvailable = allSlots.length * batch.sections.length; // slots * sections
-    if (totalRequired > totalAvailable) {
-      return res.status(400).json({ message: `Not enough total slots. Required ${totalRequired}, available ${totalAvailable}. Reduce subjects/sections or add free slots policy.` });
-    }
-
-    // Data structures for backtracking
-    // assignmentsBySlot: slotKey -> array of { faculty, section, subjectId, kind, subjectName, subjectCode }
-    const assignmentsBySlot = {};
-    // To speed up constraints, maintain maps:
-    // facultyAssignmentsCount: facultyId -> number of slots assigned (not strictly required but helpful)
-    const facultyAssignments = {};
-    // sectionAssignments: sectionId -> array of assigned slot objects (for spread heuristics)
-    const sectionAssignments = {};
-    for (const sec of batch.sections) sectionAssignments[sec._id.toString()] = [];
-
-    // Order tasks by heuristic: tasks with fewer candidate slots should be placed first (MRV).
-    // We will compute candidate slots dynamically inside the recursion to be accurate.
-    const allSlotsCopy = allSlots.map(s => ({...s}));
-
-    // Convert to helper arrays for recursion
-    const tasksArr = tasks;
-
-    // Helper to compute candidate slots for a task given current assignments
-    const computeCandidateSlots = (task) => {
-      // candidate slots = allSlots where both faculty & section free
-      // Additional heuristic: try to spread across days, so order by days not used by section
-      const existingForSection = sectionAssignments[task.sectionId.toString()] || [];
-      const ordered = orderSlotsForTask(allSlotsCopy, existingForSection);
-
-      const candidates = [];
-      for (const s of ordered) {
-        const key = slotKey(s);
-        if (!isFacultyFree(assignmentsBySlot, key, task.facultyId)) continue;
-        if (!isSectionFree(assignmentsBySlot, key, task.sectionId)) continue;
-
-        // optionally, avoid assigning same subject multiple times in same day for the section (spread)
-        const assignedThisDayForSection = existingForSection.some(a => a.day === s.day && a.subjectId && a.subjectId.toString() === task.subjectId.toString());
-        if (assignedThisDayForSection) {
-          // prefer to avoid but don't forbid — place later in list (we can still include)
-          candidates.push({ slot: s, penalty: 1 });
-        } else {
-          candidates.push({ slot: s, penalty: 0 });
-        }
-      }
-      // sort by penalty then period maybe
-      candidates.sort((a,b) => a.penalty - b.penalty || a.slot.period - b.slot.period);
-      return candidates.map(c=>c.slot);
-    };
-
-    // Use recursion with MRV ordering (choose task with fewest candidates)
-    const assignedResults = []; // array of { day, period, section, faculty,... }
-
-    // Precompute a map to group tasks by (section) to get existingForSection usage working quickly
-    const recursion = (remainingTasks) => {
-      if (remainingTasks.length === 0) return true;
-
-      // MRV: compute candidate counts
-      let bestIdx = -1;
-      let bestCandidates = null;
-      let bestCount = Infinity;
-
-      for (let i = 0; i < remainingTasks.length; i++) {
-        const t = remainingTasks[i];
-        const candidates = computeCandidateSlots(t);
-        if (candidates.length === 0) {
-          // impossible branch
-          return false;
-        }
-        if (candidates.length < bestCount) {
-          bestCount = candidates.length;
-          bestIdx = i;
-          bestCandidates = candidates;
-          if (bestCount === 1) break; // can't do better
-        }
-      }
-
-      // pick task
-      const task = remainingTasks[bestIdx];
-
-      // iterate over candidate slots in order (heuristic)
-      for (const s of bestCandidates) {
-        const key = slotKey(s);
-
-        // assign
-        if (!assignmentsBySlot[key]) assignmentsBySlot[key] = [];
-        assignmentsBySlot[key].push({
-          faculty: task.facultyId, section: task.sectionId,
-          subjectId: task.subjectId, kind: task.kind,
-          subjectName: task.subjectName, subjectCode: task.subjectCode
-        });
-
-        facultyAssignments[task.facultyId] = (facultyAssignments[task.facultyId] || 0) + 1;
-        sectionAssignments[task.sectionId.toString()].push({ day: s.day, period: s.period, subjectId: task.subjectId });
-
-        // record in assignedResults (for building entries later)
-        assignedResults.push({
-          day: s.day, period: s.period,
-          section: task.sectionId, faculty: task.facultyId,
-          subjectId: task.subjectId, kind: task.kind,
-          subjectName: task.subjectName, subjectCode: task.subjectCode
-        });
-
-        // recurse with remaining - remove this task
-        const nextTasks = remainingTasks.slice(0, bestIdx).concat(remainingTasks.slice(bestIdx+1));
-        const ok = recursion(nextTasks);
-        if (ok) return true;
-
-        // backtrack
-        assignmentsBySlot[key].pop();
-        if (assignmentsBySlot[key].length === 0) delete assignmentsBySlot[key];
-        facultyAssignments[task.facultyId] -= 1;
-        // remove last section assignment matching this day & period
-        const arr = sectionAssignments[task.sectionId.toString()];
-        for (let j = arr.length - 1; j >= 0; j--) {
-          const el = arr[j];
-          if (el.day === s.day && el.period === s.period && el.subjectId.toString() === task.subjectId.toString()) {
-            arr.splice(j, 1);
-            break;
+          // For each section, create sessions
+          for (const secId of sectionsAssigned) {
+            // create 3 theory + 2 lab sessions for this subject for that section
+            for (let tcount = 0; tcount < 3; tcount++) {
+              sessions.push({
+                subjectId, subjectName, kind: 'theory',
+                facultyId, facultyName,
+                batchId, sectionId: secId, termId: term._id.toString()
+              });
+            }
+            for (let lcount = 0; lcount < 2; lcount++) {
+              sessions.push({
+                subjectId, subjectName, kind: 'lab',
+                facultyId, facultyName,
+                batchId, sectionId: secId, termId: term._id.toString()
+              });
+            }
           }
         }
-        // remove from assignedResults
-        assignedResults.pop();
       }
-
-      // none candidate worked
-      return false;
-    };
-
-    const ok = recursion(tasksArr);
-    if (!ok) {
-      return res.status(500).json({ message: "Failed to generate timetable without conflicts. Try reducing assignments or allow more free slots." });
     }
 
-    // Build entries array from assignedResults: map section ids to sectionName
-    const sectionMap = {};
-    for (const s of batch.sections) sectionMap[s._id.toString()] = s.sectionName;
+    // Shuffle sessions lightly to spread subjects (but keep deterministic order)
+    // We will group by (section) so equal types are spread; do a sort that randomizes by subject+section hash
+    sessions.sort((a, b) => {
+      const aSection = a.sectionId.toString();
+      const bSection = b.sectionId.toString();
+      const aSubject = a.subjectId.toString();
+      const bSubject = b.subjectId.toString();
 
-    const entries = assignedResults.map(a => ({
-      day: a.day,
-      period: a.period,
-      section: a.section,
-      sectionName: sectionMap[a.section.toString()] || null,
-      subject_id: a.subjectId,
-      subjectName: a.subjectName,
-      subjectCode: a.subjectCode,
-      faculty: a.faculty,
-      facultyName: a.facultyName,
-      kind: a.kind,
-      room: null
+      if (aSection !== bSection) return aSection.localeCompare(bSection);
+      if (aSubject !== bSubject) return aSubject.localeCompare(bSubject);
+      return a.kind.localeCompare(b.kind);
+    });
+
+    // 3) Prepare slot maps
+    const facultySlots = {}; // facultyId -> slot map
+    const sectionSlots = {}; // sectionId -> slot map
+
+    // init slot maps for faculties and sections encountered
+    const ensureFaculty = (fid) => {
+      if (!facultySlots[fid]) facultySlots[fid] = initSlotMap();
+    };
+    const ensureSection = (sid) => {
+      if (!sectionSlots[sid]) sectionSlots[sid] = initSlotMap();
+    };
+
+    sessions.forEach(s => { ensureFaculty(s.facultyId); ensureSection(s.sectionId); });
+
+    // Keep scheduled entries to be returned grouped by faculty and by section
+    const facultyEntriesMap = {}; // fid -> [{ day,period,subject...}]
+    const sectionEntriesMap = {}; // sid -> [{...}]
+
+    // helper: count subject occurrences per day per section to enforce spreading
+    const subjectDayCount = {}; // key: `${sectionId}_${subjectId}_${day}` -> count
+
+    const markAssigned = (session, day, period) => {
+      // set slot to object
+      facultySlots[session.facultyId][day][period] = session;
+      sectionSlots[session.sectionId][day][period] = session;
+
+      // add to maps
+      if (!facultyEntriesMap[session.facultyId]) facultyEntriesMap[session.facultyId] = [];
+      facultyEntriesMap[session.facultyId].push({
+        day, period, subjectId: session.subjectId, subjectName: session.subjectName,
+        facultyId: session.facultyId, facultyName: session.facultyName,
+        batchId: session.batchId, sectionId: session.sectionId, kind: session.kind
+      });
+
+      if (!sectionEntriesMap[session.sectionId]) sectionEntriesMap[session.sectionId] = [];
+      sectionEntriesMap[session.sectionId].push({
+        day, period, subjectId: session.subjectId, subjectName: session.subjectName,
+        facultyId: session.facultyId, facultyName: session.facultyName,
+        batchId: session.batchId, sectionId: session.sectionId, kind: session.kind
+      });
+
+      // increment subjectDayCount
+      const k = `${session.sectionId}_${session.subjectId}_${day}`;
+      subjectDayCount[k] = (subjectDayCount[k] || 0) + 1;
+    };
+
+    // helper: checks if faculty and section free for (day,period)
+    const isSlotFree = (facultyId, sectionId, day, period) => {
+      if (facultySlots[facultyId][day][period]) return false;
+      if (sectionSlots[sectionId][day][period]) return false;
+      return true;
+    };
+
+    // helper: ensure we don't put more than 2 sessions of same subject on same day in a section
+    const wouldExceedDailySubjectLimit = (sectionId, subjectId, day) => {
+      const k = `${sectionId}_${subjectId}_${day}`;
+      return (subjectDayCount[k] || 0) >= 2; // allow up to 2 per day for spread
+    };
+
+    // Scheduling strategy:
+    // - Round over sessions; for each session, attempt to find a (day,period) that is free for both faculty and section.
+    // - We attempt to spread across days: prefer days with least counts for that subject in that section.
+    // - Also try to distribute periods so same subject not back-to-back in a day unless necessary.
+    const unscheduled = [];
+
+    for (const session of sessions) {
+      const facultyId = session.facultyId;
+      const sectionId = session.sectionId;
+
+      ensureFaculty(facultyId);
+      ensureSection(sectionId);
+
+      // find candidate days sorted by current subjectDayCount ascending (prefer days with few of this subject)
+      const dayOrder = [...DAYS].sort((a,b) => {
+        const ca = subjectDayCount[`${sectionId}_${session.subjectId}_${a}`] || 0;
+        const cb = subjectDayCount[`${sectionId}_${session.subjectId}_${b}`] || 0;
+        return ca - cb;
+      });
+
+      let placed = false;
+
+      // For each day in order, try periods. We'll use a period preference order to spread across day:
+      // prefer middle periods first to avoid clustering at first/last if you want; here use natural order but skip if conflict
+      for (const day of dayOrder) {
+        if (wouldExceedDailySubjectLimit(sectionId, session.subjectId, day)) continue;
+
+        // iterate periods but we prefer not to put more than 2 of same subject in same day
+        for (const period of PERIODS) {
+          // skip lunch? There is no lunch period index as lunch is between period4 and 5, so all periods valid.
+          if (!isSlotFree(facultyId, sectionId, day, period)) continue;
+
+          // Additional policy: avoid assigning same faculty multiple consecutive periods across multiple sections
+          // (we allow faculty to have consecutive classes if free because they might move)
+          // Try to enforce one same faculty slot per period; already enforced by facultySlots.
+
+          // If slot good -> assign
+          markAssigned(session, day, period);
+          placed = true;
+          break;
+        }
+        if (placed) break;
+      }
+
+      if (!placed) {
+        // try a relaxed placement: allow placing even if faculty busy, but prefer not to (we will not do that).
+        // Instead record unscheduled so admin can fix or increase free slots
+        unscheduled.push(session);
+      }
+    }
+
+    // Build preview object
+    const facultyEntries = Object.keys(facultyEntriesMap).map(fid => ({
+      facultyId: fid,
+      facultyName: facultyEntriesMap[fid][0]?.facultyName || '',
+      entries: facultyEntriesMap[fid]
     }));
 
-    // return preview (not saved). Client can publish by calling publish endpoint with returned entries.
-    return res.json({ message: "Timetable generated (preview)", preview: { academicYear, department_id, termId, batchId, entries } });
+    const sectionSchedules = Object.keys(sectionEntriesMap).map(sid => {
+  let sectionName = '';
+  for (const b of filteredBatches) {
+    const sec = (b.sections || []).find(s => s._id.toString() === sid);
+    if (sec) { sectionName = sec.sectionName; break; }
+  }
+  return {
+    sectionId: sid,
+    sectionName,
+    entries: sectionEntriesMap[sid]
+  };
+});
+
+    const preview = {
+      generatedFor: { academicYearId, schoolId, departmentId },
+      facultyEntries,
+      sections: sectionSchedules,
+      unscheduled
+    };
+
+    // return preview (not saved)
+    res.json({ preview });
 
   } catch (err) {
     console.error("Error generating timetable:", err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({ message: "Failed to generate timetable", error: err.message });
   }
 };
 
-// Step B: Publish
+
+/**
+ * publishTimetable
+ * - Accepts the preview object (or recomputes) and saves to DB
+ * POST body: { preview }
+ */
 exports.publishTimetable = async (req, res) => {
   try {
-    const { academicYear, department_id, termId, batchId, entries } = req.body;
-    if (!academicYear || !department_id || !termId || !batchId || !entries) {
-      return res.status(400).json({ message: "Missing inputs" });
+    const { preview } = req.body;
+    if (!preview) return res.status(400).json({ message: "Preview required" });
+
+    // minimal validation
+    const { generatedFor, facultyEntries, sections } = preview;
+    if (!generatedFor || !generatedFor.academicYearId || !generatedFor.departmentId) {
+      return res.status(400).json({ message: "Invalid preview metadata" });
     }
 
-    // Mark old timetables as unpublished
-    await Timetable.updateMany(
-      { academicYear, department_id, term_id: termId, batch_id: batchId, published: true },
-      { $set: { published: false } }
-    );
-
-    // Save new timetable
-    const latest = await Timetable.findOne({ academicYear, department_id, term_id: termId, batch_id: batchId })
-      .sort({ version: -1 });
-    const version = latest ? latest.version + 1 : 1;
-
-    const newTT = new Timetable({
-      academicYear, department_id, term_id: termId, batch_id: batchId,
-      generatedBy: req.user.id,
-      published: true,
-      version,
-      entries
+    const timetableDoc = new Timetable({
+      academicYearId: generatedFor.academicYearId,
+      schoolId: generatedFor.schoolId || null,
+      departmentId: generatedFor.departmentId,
+      generatedBy: req.user ? req.user.id : null,
+      facultySchedules: (facultyEntries || []).map(f => ({
+        facultyId: f.facultyId,
+        facultyName: f.facultyName,
+        entries: f.entries
+      })),
+      sectionSchedules: (sections || []).map(s => ({
+        batchId: s.batchId || null,
+        sectionId: s.sectionId,
+        sectionName: s.sectionName,
+        entries: s.entries
+      })),
+      meta: preview.meta || {}
     });
 
-    await newTT.save();
-    res.status(201).json({ message: "Timetable published successfully", timetable: newTT });
+    await timetableDoc.save();
+    res.status(201).json({ message: "Timetable published", timetableId: timetableDoc._id });
+
   } catch (err) {
     console.error("Error publishing timetable:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
-
-// Step C: Get latest timetable
-exports.getLatestTimetable = async (req, res) => {
-  try {
-    const { batchId, termId } = req.query;
-    if (!batchId || !termId) return res.status(400).json({ message: "Batch & Term required" });
-
-    const latest = await Timetable.findOne({ batch_id: batchId, term_id: termId, published: true })
-      .populate("entries.faculty", "name email")
-      .populate("entries.section", "sectionName")
-      .lean();
-
-    res.json(latest || { message: "No published timetable found" });
-  } catch (err) {
-    console.error("Error fetching latest timetable:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    res.status(500).json({ message: "Failed to publish timetable", error: err.message });
   }
 };

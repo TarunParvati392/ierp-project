@@ -53,7 +53,6 @@ const GenerateTimetable = () => {
       try {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/schools`, authHeaders());
         setSchools(res.data || []);
-        console.log(res.data);
       } catch (err) {
         toast.error("Failed to load schools");
       }
@@ -71,7 +70,6 @@ const GenerateTimetable = () => {
       try {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/schools/departments/${selectedSchool}`, authHeaders());
         setDepartments(res.data || []);
-        console.log(res.data);
       } catch (err) {
         toast.error("Failed to load departments");
       }
@@ -88,7 +86,7 @@ const GenerateTimetable = () => {
     try {
       const res = await axios.post(
         `${process.env.REACT_APP_API_URL}/timetable/generate`,
-        { academicYear: selectedYear, departmentId: selectedDepartment },
+        { academicYearId: selectedYear, schoolId: selectedSchool, departmentId: selectedDepartment },
         authHeaders()
       );
       setPreview(res.data.preview);
@@ -177,11 +175,11 @@ const GenerateTimetable = () => {
         <button onClick={handleGenerate} disabled={loading} className={`${Styles.button} bg-blue-600 text-white`}>
           {loading ? "Generating..." : "Generate Timetable"}
         </button>
-        {preview && (
+      {/*   {preview && (
           <button onClick={handlePublish} className={`${Styles.button} bg-green-600 text-white`}>
             Publish Timetable
           </button>
-        )}
+        )} */}
       </div>
 
       {/* Preview */}

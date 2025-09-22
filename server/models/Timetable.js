@@ -1,33 +1,39 @@
-// models/Timetable.js
 const mongoose = require('mongoose');
 
-const timetableCellSchema = new mongoose.Schema({
-  day: { type: String, enum: ["Mon","Tue","Wed","Thu","Fri"], required: true },
-  period: { type: Number, required: true }, // 1–8
-  section: { type: mongoose.Schema.Types.ObjectId, ref: "Section", required: true },
-
-  subject_id: { type: mongoose.Schema.Types.ObjectId }, // reference to Term.subjects._id
+const entrySchema = new mongoose.Schema({
+  day: { type: String, required: true }, // "Mon".."Fri"
+  period: { type: Number, required: true }, // 1..8
+  subjectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true },
   subjectName: { type: String },
-  subjectCode: { type: String },
-
-  faculty: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  facultyId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   facultyName: { type: String },
+  batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch' },
+  sectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section' },
+  kind: { type: String, enum: ['theory','lab','free'], default: 'theory' } // 'free' if intentionally free
+});
 
-  kind: { type: String, enum: ["theory", "lab", "free"], default: "theory" },
-  room: { type: String, default: null } // optional, if you want later
-}, { _id: false });
+const facultyScheduleSchema = new mongoose.Schema({
+  facultyId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  facultyName: String,
+  entries: [entrySchema]
+});
+
+const sectionScheduleSchema = new mongoose.Schema({
+  batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch' },
+  sectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Section' },
+  sectionName: String,
+  entries: [entrySchema]
+});
 
 const timetableSchema = new mongoose.Schema({
-  academicYear: { type: mongoose.Schema.Types.ObjectId, ref: "AcademicYear", required: true },
-  department_id: { type: mongoose.Schema.Types.ObjectId, required: true }, // degree OR specialization
-  term_id: { type: mongoose.Schema.Types.ObjectId, ref: "Term", required: true },
-  batch_id: { type: mongoose.Schema.Types.ObjectId, ref: "Batch", required: true },
-
-  generatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  published: { type: Boolean, default: false },
-  version: { type: Number, default: 1 },
-
-  entries: [timetableCellSchema] // all slots
+  academicYearId: { type: mongoose.Schema.Types.ObjectId, ref: 'AcademicYear', required: true },
+  schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true },
+  departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: true },
+  generatedAt: { type: Date, default: Date.now },
+  generatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // schedule manager who generated/published
+  facultySchedules: [facultyScheduleSchema],
+  sectionSchedules: [sectionScheduleSchema],
+  meta: { type: mongoose.Mixed } // any additional info
 }, { timestamps: true });
 
-module.exports = mongoose.model("Timetable", timetableSchema);
+module.exports = mongoose.model('Timetable', timetableSchema);
