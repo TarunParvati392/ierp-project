@@ -16,6 +16,7 @@ import UnBlock from './pages/dashboard/Admin/UnBlock';
 import DeleteUsers from './pages/dashboard/Admin/DeleteUsers';
 import ManageStaffTab from './pages/dashboard/AcademicManager/ManageStaff';
 import ManageAcademicsTab from './pages/dashboard/AcademicManager/ManageAcademics';
+import GenerateTimetable from './pages/dashboard/SchedulerManager/TimeTableGenerate';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="delete-users" element={<DeleteUsers />} />
             <Route path="manage-staff" element={<ManageStaffTab />} />
             <Route path="manage-academics" element={<ManageAcademicsTab />} />
+            <Route path="generate-timetable" element={<GenerateTimetable />} />
             <Route path="*" element={<h1 className="text-center mt-20">404 - Page Not Found</h1>} />
           </Route>
         </Routes>
