@@ -99,7 +99,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🏆 Project Notes
 
-Built as part of the MCA Degree completion in 2 Months.  
-Designed to reduce the dependency on external vendors.
+Developed as part of the MCA degree program within a 2-month timeline.
+Created to minimize reliance on external vendors and streamline processes.
 
 ---
