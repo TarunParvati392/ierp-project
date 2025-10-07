@@ -10,7 +10,7 @@ const roleTabs = {
     { name: "Create Users", path: "/dashboard/create-users", icon: <FaUsers /> },
     { name: "Block Users", path: "/dashboard/block-users", icon: <FaUsersSlash /> },
     { name: "Unblock Users", path: "/dashboard/unblock-users", icon: <FaUserCheck /> },
-    { name: "Delete Users", path: "/dashboard/delete-users", icon: <FaUserTimes /> }
+    { name: "Delete Users", path: "/dashboard/delete-users", icon: <FaUserTimes /> },
   ],
   "Academic Manager": [
     { name: "Manage Batch", path: "/dashboard/manage-batch", icon: <FaLayerGroup /> },
@@ -20,6 +20,10 @@ const roleTabs = {
 
   "Schedule Manager": [
     { name: "Generate Timetable", path: "/dashboard/generate-timetable", icon: <FaWatchmanMonitoring /> }
+  ],
+  HR: [
+    { name: "Manage Employees", path: "/dashboard/manage-employees", icon: <FaUsers /> },
+    { name: "Pay Roll", path: "/dashboard/pay-roll", icon: <FaLayerGroup /> }
   ]
   // Add more roles here...
 };

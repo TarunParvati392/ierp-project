@@ -19,6 +19,7 @@ const AddUserForm = () => {
     "Grievance Manager",
     "Schedule Manager",
     "Student",
+    "HR",
   ]);
 
   const [form, setForm] = useState({

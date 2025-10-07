@@ -8,4 +8,5 @@ module.exports = {
   'Asset Manager': 'ASM',
   'Grievance Manager': 'GRM',
   'Schedule Manager': 'SCM',
+  HR: 'HR',
 };
