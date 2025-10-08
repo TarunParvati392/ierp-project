@@ -31,7 +31,28 @@ export default function PayrollUpload() {
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
       // convert to json (array of objects, using first row as header)
-      const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      let json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+      // Fix Excel date serials in Pay Date column
+      const isExcelDateSerial = (val) => typeof val === 'number' && val > 20000 && val < 90000;
+      const excelDateToString = (serial) => {
+        // Excel's epoch starts at 1899-12-30
+        const utc_days = Math.floor(serial - 25569);
+        const utc_value = utc_days * 86400;
+        const date_info = new Date(utc_value * 1000);
+        // Format as DD-MM-YYYY
+        const dd = String(date_info.getUTCDate()).padStart(2, '0');
+        const mm = String(date_info.getUTCMonth() + 1).padStart(2, '0');
+        const yyyy = date_info.getUTCFullYear();
+        return `${dd}-${mm}-${yyyy}`;
+      };
+      json = json.map((row) => {
+        const newRow = { ...row };
+        if ('Pay Date' in newRow && isExcelDateSerial(newRow['Pay Date'])) {
+          newRow['Pay Date'] = excelDateToString(newRow['Pay Date']);
+        }
+        return newRow;
+      });
 
       if (json.length === 0) {
         setColumns([]);
@@ -77,12 +98,15 @@ export default function PayrollUpload() {
     try {
       setLoading(true);
       // POST to backend endpoint. Replace URL if your backend path differs.
-      const res = await axios.post("/api/payroll/send-mails", payload);
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/payroll/send-mails`, payload, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       // If backend not ready, you will likely get network error — it's fine for Day 1.
       alert("Request completed. Check server logs / response: " + JSON.stringify(res.data));
     } catch (err) {
       console.error(err);
       // For Day 1 we show selected rows in the console for QA if server not available
+      console.log("API URL: ", `${process.env.REACT_APP_API_URL}/api/payroll/send-mails`);
       console.log("Selected rows (preview):", selectedRows);
       alert("Could not contact server. Selected rows printed to console for preview.");
     } finally {
@@ -90,11 +114,46 @@ export default function PayrollUpload() {
     }
   };
 
+  // Generate and download an Excel template with the required header columns
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'Emp No', 'Name', 'Department', 'Designation', 'Gender', 'PF UAN No', 'PAN Number', 'ESIC No', 'Bank Acc No', 'Paid Days',
+      'BASIC', 'DA', 'HRA', 'IR/Allowance', 'Arrears', 'Gross Earning', 'Professional Tax', 'Gross Deduction', 'Net Amount', 'Net Pay in Words', 'Pay Month', 'Pay Date', 'Email'
+    ];
+
+    // create worksheet with single empty row so headers appear
+    const wsData = [headers];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'PayrollTemplate');
+
+    // write workbook and trigger download
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'payroll_template.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className={`max-w-16xl mx-auto py-8 px-4 md:px-8`}>
       <div className={`rounded-2xl shadow-xl border border-gray-700 bg-gradient-to-br from-blue-950/80 to-gray-900/80 ${Styles.card} p-8`}>
         <h2 className="text-3xl font-bold mb-2 text-blue-200 tracking-tight">Payroll Upload</h2>
         <p className="mb-6 text-gray-300">Upload your payroll Excel/CSV, preview, select, and send to employees.</p>
+
+        <div className="mb-6">
+          <button
+            onClick={handleDownloadTemplate}
+            className={`px-4 py-2 rounded-lg font-semibold border border-blue-700 bg-blue-800 hover:bg-blue-700 text-blue-100 transition`}
+          >
+            download excel format
+          </button>
+        </div>
 
         <div className="mb-6">
           <label className="block mb-2 font-semibold text-blue-100">Upload Excel (.xlsx/.xls) or CSV</label>

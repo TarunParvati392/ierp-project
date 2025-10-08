@@ -58,6 +58,9 @@ app.use('/api/sections', sectionRoutes);
 const schedulerRoutes = require("./routes/schedulerRoutes/schedulerRoutes");
 app.use("/api/timetable", schedulerRoutes);
 
+const payrollRoutes = require('./routes/HR/payrollRoutes');
+app.use('/api/payroll', payrollRoutes);
+
 //const faceLockRoutes = require('./routes/faceLockRoutes');
 //app.use('/api/facelock', faceLockRoutes);
 
